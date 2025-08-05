@@ -57,7 +57,7 @@ impl Default for ScrollableSettings {
 
 impl ScrollableSettings {
     /// Default value of [`scroll_speed`](Self::scroll_speed).
-    pub const SCROLL_SPEED_DEFAULT: f32 = 4.0;
+    pub const SCROLL_SPEED_DEFAULT: f32 = 1.0;
 
     /// Returns the number of pixels in the height of a line.
     fn line_height_px(&self) -> f32 {
