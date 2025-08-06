@@ -11,7 +11,7 @@ use crate::Scrollable;
 /// * add the `Node` component if it's not already present;
 /// * add a `Relationship` between this entity and the targeted `scrollable` node, inserting [`Scrollable`] into the target. The target typically has overflowing content;
 /// * spawn the _thumb_ of the scrollbar as a child of this entity and watched by an observer for `Drag` triggers. The thumb can be configured by adding [`ScrollbarSettings`] to this entity.
-#[derive(Component, Clone, Debug)]
+#[derive(Component, Clone, Reflect, Debug)]
 #[relationship(relationship_target = Scrollable)]
 #[require(Node, ScrollbarSettings)]
 #[component(on_add = spawn_thumb)]
@@ -23,7 +23,7 @@ pub struct Scrollbar {
 /// Settings of the thumb of a [`Scrollbar`].
 ///
 /// This component is added to the [`Scrollbar`] to configure its thumb.
-#[derive(Component, Copy, Clone, Debug)]
+#[derive(Component, Copy, Clone, Reflect, Debug)]
 pub struct ScrollbarSettings {
     /// Color of the thumb.
     pub thumb_color: Color,

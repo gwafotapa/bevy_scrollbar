@@ -174,6 +174,11 @@ pub struct ScrollbarSystem;
 
 impl Plugin for ScrollbarPlugin {
     fn build(&self, app: &mut App) {
+        app.register_type::<Scrollbar>()
+            .register_type::<Scrollable>()
+            .register_type::<ScrollbarSettings>()
+            .register_type::<ScrollableSettings>();
+
         app.add_systems(
             PostUpdate,
             update_thumb_height

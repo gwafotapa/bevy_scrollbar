@@ -18,7 +18,7 @@ use crate::{scrollbar, Scrollbar};
 /// Note: As `Children`, this component is not inserted directly. It is
 /// * either automatically inserted when you spawn a [`Scrollbar`] (see [example 1](crate#example-1));
 /// * or inserted via `SpawnRelated::spawn_one` (see [example 2](crate#example-2)).
-#[derive(Component, Clone, Debug)]
+#[derive(Component, Clone, Reflect, Debug)]
 #[relationship_target(relationship = Scrollbar, linked_spawn)]
 #[require(Node, ScrollableSettings)]
 #[component(on_add = configure_overflow_and_wheel_scroll)]
@@ -37,7 +37,7 @@ impl Scrollable {
 /// Settings of a [`Scrollable`] node.
 ///
 /// Add this component to a [`Scrollable`] node to configure its `scroll speed`.
-#[derive(Component, Copy, Clone, Debug)]
+#[derive(Component, Copy, Clone, Reflect, Debug)]
 pub struct ScrollableSettings {
     /// How many pixels the [`Scrollable`] node should move per mouse pixel scrolled.
     pub scroll_speed: f32,
