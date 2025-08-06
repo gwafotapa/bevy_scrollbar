@@ -20,7 +20,7 @@ use crate::{scrollbar, Scrollbar};
 /// * or inserted via `SpawnRelated::spawn_one` (see [example 2](crate#example-2)).
 #[derive(Component, Clone, Reflect, Debug)]
 #[relationship_target(relationship = Scrollbar, linked_spawn)]
-#[require(Node, ScrollableSettings)]
+#[require(Node, ScrollableScrollScale, ScrollableLineHeight)]
 #[component(on_add = configure_overflow_and_wheel_scroll)]
 pub struct Scrollable {
     /// The [`Scrollbar`] entity of this scrollable entity.
@@ -34,35 +34,42 @@ impl Scrollable {
     }
 }
 
-/// Settings of a [`Scrollable`] node.
-///
-/// Add this component to a [`Scrollable`] node to configure its `scroll speed`.
+/// How many pixels the [`Scrollable`] node should move per mouse pixel scrolled.
 #[derive(Component, Copy, Clone, Reflect, Debug)]
-pub struct ScrollableSettings {
-    /// How many pixels the [`Scrollable`] node should move per mouse pixel scrolled.
-    pub scroll_speed: f32,
-    /// Only used to compute mouse pixel scroll and only if `MouseScrollUnit::Line` is used.
+pub struct ScrollableScrollScale(pub f32);
+
+impl Default for ScrollableScrollScale {
+    fn default() -> Self {
+        Self(Self::DEFAULT)
+    }
+}
+
+impl ScrollableScrollScale {
+    /// Default value of [`ScrollableScrollScale`].
+    pub const DEFAULT: f32 = 1.0;
+}
+
+/// Used to compute line height for mouse pixel scroll. This is only used by vertical [`Scrollbar`]s using `MouseScrollUnit::Line`.
+#[derive(Component, Copy, Clone, Reflect, Debug)]
+pub struct ScrollableLineHeight {
+    /// Font size.
     pub font_size: f32,
-    /// Only used to compute mouse pixel scroll and only if `MouseScrollUnit::Line` is used.
+    /// Line height.
     pub line_height: LineHeight,
 }
 
-impl Default for ScrollableSettings {
+impl Default for ScrollableLineHeight {
     fn default() -> Self {
         Self {
-            scroll_speed: Self::DEFAULT_SCROLL_SPEED,
             font_size: TextFont::default().font_size,
             line_height: LineHeight::default(),
         }
     }
 }
 
-impl ScrollableSettings {
-    /// Default value of [`scroll_speed`](Self::scroll_speed).
-    pub const DEFAULT_SCROLL_SPEED: f32 = 1.0;
-
+impl ScrollableLineHeight {
     /// Returns the number of pixels in the height of a line.
-    fn line_height_px(&self) -> f32 {
+    fn px(&self) -> f32 {
         match self.line_height {
             LineHeight::Px(px) => px,
             LineHeight::RelativeToFont(scale) => scale * self.font_size,
@@ -92,15 +99,20 @@ fn configure_overflow_and_wheel_scroll(
 /// Observer watching a [`Scrollable`] node for `Scroll` triggers.
 pub(super) fn scroll_on_wheel(
     scroll: Trigger<Pointer<Scroll>>,
-    q_settings: Query<&ScrollableSettings>,
+    q_scroll_scale: Query<&ScrollableScrollScale>,
+    q_line_height: Query<&ScrollableLineHeight>,
     mut commands: Commands,
 ) -> Result {
-    let settings = q_settings.get(scroll.target())?;
-    let dy = settings.scroll_speed
-        * match scroll.unit {
-            MouseScrollUnit::Line => scroll.y * settings.line_height_px(),
-            MouseScrollUnit::Pixel => scroll.y,
-        };
-    commands.run_system_cached_with(scrollbar::scroll, (scroll.target(), dy));
+    let scrollable = scroll.target();
+    let mouse_scroll = match scroll.unit {
+        MouseScrollUnit::Line => {
+            let line_height = q_line_height.get(scrollable)?;
+            scroll.y * line_height.px()
+        }
+        MouseScrollUnit::Pixel => scroll.y,
+    };
+    let scroll_scale = q_scroll_scale.get(scrollable)?;
+    let scroll = scroll_scale.0 * mouse_scroll;
+    commands.run_system_cached_with(scrollbar::scroll, (scrollable, scroll));
     Ok(())
 }

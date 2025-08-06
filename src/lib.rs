@@ -75,7 +75,7 @@
 //!
 //! # The [`Scrollable`] content
 //!
-//! When the [`Scrollable`] component is added to the overflowed node, it adds an observer watching the node for mouse wheel `Scroll`s. You can configure how fast the content scrolls by adding [`ScrollableSettings`] to the [`Scrollable`] node. See [example 2](crate#example-2).
+//! When the [`Scrollable`] component is added to the overflowed node, it adds an observer watching the node for mouse wheel `Scroll`s. You can configure how fast the content scrolls by adding [`ScrollableScrollScale`] to the [`Scrollable`] node. See [example 2](crate#example-2).
 //!
 //! # Customization of the thumb
 //!
@@ -85,7 +85,7 @@
 //!
 //!```no_run
 //! use bevy::{ecs::spawn::SpawnIter, prelude::*};
-//! use bevy_scrollbar::{Scrollable, ScrollableSettings, ScrollbarPlugin, ThumbSettings};
+//! use bevy_scrollbar::{Scrollable, ScrollableScrollScale, ScrollbarPlugin, ThumbSettings};
 //!
 //! fn main() {
 //!     App::new()
@@ -130,10 +130,7 @@
 //!             )
 //!         }))),
 //!         // Customize scroll speed of the content
-//!         ScrollableSettings {
-//!             scroll_speed: 2.0,
-//!             ..default()
-//!         },
+//!         ScrollableScrollScale(2.0),
 //!         // Spawn the scrollbar
 //!         Scrollable::spawn_one((
 //!             Node {
@@ -160,7 +157,7 @@
 mod scrollable;
 mod scrollbar;
 
-pub use scrollable::{Scrollable, ScrollableSettings};
+pub use scrollable::{Scrollable, ScrollableLineHeight, ScrollableScrollScale};
 pub use scrollbar::{Scrollbar, ThumbSettings};
 
 use bevy::{prelude::*, ui::UiSystem};
@@ -177,7 +174,8 @@ impl Plugin for ScrollbarPlugin {
         app.register_type::<Scrollbar>()
             .register_type::<Scrollable>()
             .register_type::<ThumbSettings>()
-            .register_type::<ScrollableSettings>();
+            .register_type::<ScrollableScrollScale>()
+            .register_type::<ScrollableLineHeight>();
 
         app.add_systems(
             PostUpdate,
