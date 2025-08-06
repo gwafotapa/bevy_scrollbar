@@ -50,7 +50,7 @@ pub struct ScrollableSettings {
 impl Default for ScrollableSettings {
     fn default() -> Self {
         Self {
-            scroll_speed: Self::SCROLL_SPEED_DEFAULT,
+            scroll_speed: Self::DEFAULT_SCROLL_SPEED,
             font_size: TextFont::default().font_size,
             line_height: LineHeight::default(),
         }
@@ -59,7 +59,7 @@ impl Default for ScrollableSettings {
 
 impl ScrollableSettings {
     /// Default value of [`scroll_speed`](Self::scroll_speed).
-    pub const SCROLL_SPEED_DEFAULT: f32 = 1.0;
+    pub const DEFAULT_SCROLL_SPEED: f32 = 1.0;
 
     /// Returns the number of pixels in the height of a line.
     fn line_height_px(&self) -> f32 {

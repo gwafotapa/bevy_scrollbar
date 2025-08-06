@@ -79,13 +79,13 @@
 //!
 //! # Customization of the thumb
 //!
-//! Color and drag speed of the thumb can be configured by adding [`ScrollbarSettings`] to the [`Scrollbar`]. See [example 2](crate#example-2).
+//! Color and drag speed of the thumb can be configured by adding [`ThumbSettings`] to the [`Scrollbar`]. See [example 2](crate#example-2).
 //!
 //! # Example 2
 //!
 //!```no_run
 //! use bevy::{ecs::spawn::SpawnIter, prelude::*};
-//! use bevy_scrollbar::{Scrollable, ScrollableSettings, ScrollbarPlugin, ScrollbarSettings};
+//! use bevy_scrollbar::{Scrollable, ScrollableSettings, ScrollbarPlugin, ThumbSettings};
 //!
 //! fn main() {
 //!     App::new()
@@ -148,9 +148,9 @@
 //!             // Add the scrollbar as a child of the container
 //!             ChildOf(container_id),
 //!             // Customize color and speed of the thumb
-//!             ScrollbarSettings {
-//!                 thumb_color: Color::srgb(0.0, 0.0, 1.0),
-//!                 thumb_speed: 4.0,
+//!             ThumbSettings {
+//!                 color: Color::srgb(0.0, 0.0, 1.0),
+//!                 speed: 4.0,
 //!             },
 //!         )),
 //!     ));
@@ -161,7 +161,7 @@ mod scrollable;
 mod scrollbar;
 
 pub use scrollable::{Scrollable, ScrollableSettings};
-pub use scrollbar::{Scrollbar, ScrollbarSettings};
+pub use scrollbar::{Scrollbar, ThumbSettings};
 
 use bevy::{prelude::*, ui::UiSystem};
 
@@ -176,7 +176,7 @@ impl Plugin for ScrollbarPlugin {
     fn build(&self, app: &mut App) {
         app.register_type::<Scrollbar>()
             .register_type::<Scrollable>()
-            .register_type::<ScrollbarSettings>()
+            .register_type::<ThumbSettings>()
             .register_type::<ScrollableSettings>();
 
         app.add_systems(

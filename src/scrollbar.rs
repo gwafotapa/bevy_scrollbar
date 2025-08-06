@@ -10,10 +10,10 @@ use crate::Scrollable;
 /// Adding this component to an entity will:
 /// * add the `Node` component if it's not already present;
 /// * add a `Relationship` between this entity and the targeted `scrollable` node, inserting [`Scrollable`] into the target. The target typically has overflowing content;
-/// * spawn the _thumb_ of the scrollbar as a child of this entity and watched by an observer for `Drag` triggers. The thumb can be configured by adding [`ScrollbarSettings`] to this entity.
+/// * spawn the _thumb_ of the scrollbar as a child of this entity and watched by an observer for `Drag` triggers. The thumb can be configured by adding [`ThumbSettings`] to this entity.
 #[derive(Component, Clone, Reflect, Debug)]
 #[relationship(relationship_target = Scrollable)]
-#[require(Node, ScrollbarSettings)]
+#[require(Node, ThumbSettings)]
 #[component(on_add = spawn_thumb)]
 pub struct Scrollbar {
     /// The [`Scrollable`] entity of this scrollbar entity.
@@ -24,42 +24,42 @@ pub struct Scrollbar {
 ///
 /// This component is added to the [`Scrollbar`] to configure its thumb.
 #[derive(Component, Copy, Clone, Reflect, Debug)]
-pub struct ScrollbarSettings {
+pub struct ThumbSettings {
     /// Color of the thumb.
-    pub thumb_color: Color,
+    pub color: Color,
     /// How many pixels the thumb is moved per `Drag::delta` unit.
-    pub thumb_speed: f32,
+    pub speed: f32,
 }
 
-impl Default for ScrollbarSettings {
+impl Default for ThumbSettings {
     fn default() -> Self {
         Self {
-            thumb_color: Color::default(),
-            thumb_speed: Self::THUMB_SPEED_DEFAULT,
+            color: Color::default(),
+            speed: Self::DEFAULT_SPEED,
         }
     }
 }
 
-impl ScrollbarSettings {
-    /// Default value of [`thumb_speed`](Self::thumb_speed).
-    pub const THUMB_SPEED_DEFAULT: f32 = 4.0;
+impl ThumbSettings {
+    /// Default value of [`speed`](Self::speed).
+    pub const DEFAULT_SPEED: f32 = 4.0;
 }
 
 /// `on_add` hook of [`Scrollbar`].
 fn spawn_thumb(mut world: DeferredWorld, HookContext { entity, .. }: HookContext) {
-    let settings = *world.get::<ScrollbarSettings>(entity).unwrap();
+    let thumb = *world.get::<ThumbSettings>(entity).unwrap();
     let border_radius = *world.get::<BorderRadius>(entity).unwrap();
     world
         .commands()
         .spawn((
             Node {
                 width: Val::Percent(100.0),
-                height: Val::ZERO, // height is adjusted by update_thumb_height
+                height: Val::ZERO, // height is adjusted by update_thumb_height()
                 ..default()
             },
             ChildOf(entity),
             border_radius,
-            BackgroundColor(settings.thumb_color),
+            BackgroundColor(thumb.color),
         ))
         .observe(scroll_on_drag);
 }
@@ -68,13 +68,13 @@ fn spawn_thumb(mut world: DeferredWorld, HookContext { entity, .. }: HookContext
 fn scroll_on_drag(
     drag: Trigger<Pointer<Drag>>,
     q_child_of: Query<&ChildOf>,
-    q_scrollbar: Query<(&Scrollbar, &ScrollbarSettings)>,
+    q_scrollbar: Query<(&Scrollbar, &ThumbSettings)>,
     mut commands: Commands,
 ) -> Result {
     let thumb = drag.target();
     let scrollbar = q_child_of.get(thumb)?.parent();
-    let (&Scrollbar { scrollable }, settings) = q_scrollbar.get(scrollbar)?;
-    let dy = -settings.thumb_speed * drag.delta.y;
+    let (&Scrollbar { scrollable }, thumb) = q_scrollbar.get(scrollbar)?;
+    let dy = -thumb.speed * drag.delta.y;
     commands.run_system_cached_with(scroll, (scrollable, dy));
     Ok(())
 }
