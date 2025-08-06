@@ -4,7 +4,7 @@
 [![docs.rs](https://docs.rs/bevy_scrollbar/badge.svg)](https://docs.rs/bevy_scrollbar)
 [![Following released Bevy versions](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://bevy.org/learn/quick-start/plugin-development/#main-branch-tracking)
 
-Bevy plugin providing a vertical scrollbar.
+Bevy plugin providing a scrollbar.
 
 ![Gif showcasing the plugin](showcase.gif)
 

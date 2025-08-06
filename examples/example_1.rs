@@ -17,7 +17,7 @@ fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
 
     commands.spawn((
-        // Container node for the overflowing node and its scrollbar that are usually siblings.
+        // Container node for the overflowed node and its scrollbar that are usually siblings.
         Node {
             width: Val::Percent(100.0),
             height: Val::Percent(100.0),
@@ -26,12 +26,15 @@ fn setup(mut commands: Commands) {
             ..default()
         },
         Children::spawn(SpawnWith(|container: &mut ChildSpawner| {
-            // Overflowing node
+            // Overflowed node
             let scrollable = container
                 .spawn((
                     Node {
                         height: Val::Percent(80.0),
                         border: UiRect::all(Val::Px(5.0)).with_right(Val::Px(2.5)),
+                        // You can omit the overflow field for a vertical scrollbar in which case it
+                        // will be automatically set to Overflow::scroll_y()
+                        overflow: Overflow::scroll_y(),
                         flex_direction: FlexDirection::Column,
                         ..default()
                     },
@@ -47,7 +50,8 @@ fn setup(mut commands: Commands) {
                 Scrollbar { scrollable },
                 Node {
                     width: Val::Percent(1.5),
-                    height: Val::Percent(80.0), // Same height as the scrollable node
+                    // Same height as the scrollable node
+                    height: Val::Percent(80.0),
                     border: UiRect::all(Val::Px(5.0)).with_left(Val::Px(2.5)),
                     ..default()
                 },
