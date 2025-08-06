@@ -1,7 +1,9 @@
 //! Example showing how to spawn a scrollbar from the scrollable entity.
 
 use bevy::{ecs::spawn::SpawnIter, prelude::*};
-use bevy_scrollbar::{Scrollable, ScrollableScrollScale, ScrollbarPlugin, ThumbSettings};
+use bevy_scrollbar::{
+    Scrollable, ScrollableScrollScale, ScrollbarPlugin, ThumbColor, ThumbScrollScale,
+};
 
 fn main() {
     App::new()
@@ -60,11 +62,10 @@ fn setup(mut commands: Commands) {
             BorderRadius::all(Val::Px(10.0)),
             // Add the scrollbar as a child of the container
             ChildOf(container_id),
-            // Customize color and speed of the thumb
-            ThumbSettings {
-                color: Color::srgb(0.0, 0.0, 1.0),
-                speed: 4.0,
-            },
+            // Customize color of the thumb
+            ThumbColor(Color::srgb(0.0, 0.0, 1.0)),
+            // Customize speed of the thumb
+            ThumbScrollScale(4.0),
         )),
     ));
 }

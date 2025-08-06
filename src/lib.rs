@@ -79,13 +79,13 @@
 //!
 //! # Customization of the thumb
 //!
-//! Color and drag speed of the thumb can be configured by adding [`ThumbSettings`] to the [`Scrollbar`]. See [example 2](crate#example-2).
+//! Color and drag speed of the thumb can be configured by adding [`ThumbColor`] and [`ThumbScrollScale`] to the [`Scrollbar`]. See [example 2](crate#example-2).
 //!
 //! # Example 2
 //!
 //!```no_run
 //! use bevy::{ecs::spawn::SpawnIter, prelude::*};
-//! use bevy_scrollbar::{Scrollable, ScrollableScrollScale, ScrollbarPlugin, ThumbSettings};
+//! use bevy_scrollbar::{Scrollable, ScrollableScrollScale, ScrollbarPlugin, ThumbColor, ThumbScrollScale};
 //!
 //! fn main() {
 //!     App::new()
@@ -144,10 +144,10 @@
 //!             BorderRadius::all(Val::Px(10.0)),
 //!             // Add the scrollbar as a child of the container
 //!             ChildOf(container_id),
-//!             // Customize color and speed of the thumb
-//!             ThumbSettings {
-//!                 color: Color::srgb(0.0, 0.0, 1.0),
-//!                 speed: 4.0,
+//!             // Customize color of the thumb
+//!             ThumbColor(Color::srgb(0.0, 0.0, 1.0)),
+//!             // Customize speed of the thumb
+//!             ThumbScrollScale(4.0),
 //!             },
 //!         )),
 //!     ));
@@ -158,7 +158,7 @@ mod scrollable;
 mod scrollbar;
 
 pub use scrollable::{Scrollable, ScrollableLineHeight, ScrollableScrollScale};
-pub use scrollbar::{Scrollbar, ThumbSettings};
+pub use scrollbar::{Scrollbar, ThumbColor, ThumbScrollScale};
 
 use bevy::{prelude::*, ui::UiSystem};
 
@@ -173,7 +173,8 @@ impl Plugin for ScrollbarPlugin {
     fn build(&self, app: &mut App) {
         app.register_type::<Scrollbar>()
             .register_type::<Scrollable>()
-            .register_type::<ThumbSettings>()
+            .register_type::<ThumbColor>()
+            .register_type::<ThumbScrollScale>()
             .register_type::<ScrollableScrollScale>()
             .register_type::<ScrollableLineHeight>();
 
