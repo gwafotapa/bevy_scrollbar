@@ -6,7 +6,7 @@
 //!
 //! # Making a scrollbar
 //!
-//! The two pieces of a scrollbar are referred to as the _track_ and the _thumb_.  You can turn an entity into a scrollbar (track) by adding [`Scrollbar { scrollable }`](Scrollbar) to it, where `scrollable` is the Id of another node which usually has overflowing content. This adds `Node` to your entity if it's missing and spawns the thumb as its child.
+//! The two pieces of a scrollbar are referred to as the _track_ and the _thumb_.  You can turn an entity into a scrollbar (track) by adding [`Scrollbar { scrollable }`](Scrollbar) to it, where `scrollable` is the Id of an another node, usually overflowed. This adds `Node` to your entity if it's missing and spawns the thumb as its child.
 //!
 //! # Example 1
 //!
@@ -28,7 +28,7 @@
 //!     commands.spawn(Camera2d);
 //!
 //!     commands.spawn((
-//!         // Container node for the overflowing node and its scrollbar that are usually siblings.
+//!         // Container node for the overflowed node and its scrollbar that are usually siblings.
 //!         Node {
 //!             width: Val::Percent(100.0),
 //!             height: Val::Percent(100.0),
@@ -37,7 +37,7 @@
 //!             ..default()
 //!         },
 //!         Children::spawn(SpawnWith(|container: &mut ChildSpawner| {
-//!             // Overflowing node
+//!             // Overflowed node. No need to set the overflow field
 //!             let scrollable = container
 //!                 .spawn((
 //!                     Node {
@@ -71,15 +71,15 @@
 //!
 //! # The [`Scrollbar`] / [`Scrollable`] relationship
 //!
-//! The [`Scrollbar`] component implements `Relationship` with target [`Scrollable`]. This relates the scrollbar node to the node with scrollable content which means [`Scrollable`] can be used to spawn a scrollbar (the same way `Children` can be used to spawn children). See [example 2](crate#example-2).
+//! The [`Scrollbar`] component implements `Relationship` with target [`Scrollable`]. This relates the [`Scrollbar`] node to the overflowed node to which [`Scrollable`] is added. This means [`Scrollable`] can be used to spawn a scrollbar (the same way `Children` can be used to spawn children). See [example 2](crate#example-2).
 //!
 //! # The [`Scrollable`] content
 //!
-//! The [`Scrollable`] component adds an observer watching the content for mouse wheel scrolls. You can configure how fast the content scrolls by adding [`ScrollableSettings`] to the content node. See [example 2](crate#example-2).
+//! When the [`Scrollable`] component is added to the overflowed node, it adds an observer watching the node for mouse wheel `Scroll`s. You can configure how fast the content scrolls by adding [`ScrollableSettings`] to the [`Scrollable`] node. See [example 2](crate#example-2).
 //!
 //! # Customization of the thumb
 //!
-//! Color and drag speed of the thumb can be configured by adding [`ScrollbarSettings`] to the scrollbar. See [example 2](crate#example-2).
+//! Color and drag speed of the thumb can be configured by adding [`ScrollbarSettings`] to the [`Scrollbar`]. See [example 2](crate#example-2).
 //!
 //! # Example 2
 //!

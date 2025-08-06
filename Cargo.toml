@@ -3,11 +3,11 @@ name = "bevy_scrollbar"
 version = "0.1.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
-description = "Bevy plugin for a vertical scrollbar."
+description = "Bevy plugin providing a vertical scrollbar."
 keywords = ["bevy", "scrollbar", "ui"]
 categories = ["game-development", "gui"]
 repository = "https://github.com/gwafotapa/bevy_scrollbar"
-# documentation = "https://docs.rs/bevy_scrollbar"
+documentation = "https://docs.rs/bevy_scrollbar"
 
 [features]
 default = ["std"]

@@ -9,7 +9,7 @@ use crate::Scrollable;
 ///
 /// Adding this component to an entity will:
 /// * add the `Node` component if it's not already present;
-/// * add a `Relationship` between this entity and the targeted `scrollable` node, inserting [`Scrollable`] into the target. The target typically has children overflowing its content;
+/// * add a `Relationship` between this entity and the targeted `scrollable` node, inserting [`Scrollable`] into the target. The target typically has overflowing content;
 /// * spawn the _thumb_ of the scrollbar as a child of this entity and watched by an observer for `Drag` triggers. The thumb can be configured by adding [`ScrollbarSettings`] to this entity.
 #[derive(Component, Clone, Debug)]
 #[relationship(relationship_target = Scrollable)]

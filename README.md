@@ -1,6 +1,8 @@
 # Bevy Scrollbar
 
-[![Following released Bevy versions](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://bevyengine.org/learn/quick-start/plugin-development/#main-branch-tracking)
+[![crates.io](https://img.shields.io/crates/v/bevy_awesome_plugin)](https://crates.io/crates/bevy_awesome_plugin)
+[![docs.rs](https://docs.rs/bevy_awesome_plugin/badge.svg)](https://docs.rs/bevy_awesome_plugin)
+[![Following Bevy's main branch](https://img.shields.io/badge/Bevy%20tracking-main-lightblue)](https://bevy.org/learn/quick-start/plugin-development/#main-branch-tracking)
 
 Bevy plugin providing a vertical scrollbar.
 
@@ -14,11 +16,11 @@ Check out the documentation homepage or look at [example_1.rs](examples/example_
 
 This project simply aims to support scrollbars in small Bevy projects until Bevy does it natively. So the scope is small. Adding horizontal scrollbars would be the next (and likely final) goal.
 
-## Contributing
+## Contributions
 
 Feel free to open a small PR.
 
-## Bevy compatibility table
+## Bevy compatibility
 
 | `bevy_scrollbar` | `bevy` |
 | :--              | :--    |

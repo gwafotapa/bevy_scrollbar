@@ -7,7 +7,7 @@ use bevy::{
 
 use crate::{scrollbar, Scrollbar};
 
-/// Component of a scrollable node, which usually has children overflowing its content.
+/// Component of a scrollable node, which usually has overflowing content.
 ///
 /// Adding this component to an entity will:
 /// * add the `Node` component if it's not already present;
@@ -15,7 +15,9 @@ use crate::{scrollbar, Scrollbar};
 /// * set up this node as the `RelationshipTarget` of a [`Scrollbar`] node;
 /// * have it watched by an observer for `Scroll` triggers.
 ///
-/// Note: As `Children`, this component is not inserted directly. See [example 2](crate#example-2) for more information.
+/// Note: As `Children`, this component is not inserted directly. It is
+/// * either automatically inserted when you spawn a [`Scrollbar`] (see [example 1](crate#example-1));
+/// * or inserted via `SpawnRelated::spawn_one` (see [example 2](crate#example-2)).
 #[derive(Component, Clone, Debug)]
 #[relationship_target(relationship = Scrollbar, linked_spawn)]
 #[require(Node, ScrollableSettings)]
