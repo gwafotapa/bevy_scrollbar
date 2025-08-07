@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+
+* Move the thumb when the track is clicked outside it
+* Remove deprecated `ThumbScrollScale`
+* Remove deprecate `ScrollableScrollScale`
+
 ## 0.2.0
 
 * Add support for horizontal scrollbars

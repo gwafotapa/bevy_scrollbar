@@ -14,7 +14,7 @@ Check out the documentation homepage or look at [example_1.rs](examples/example_
 
 ## Scope
 
-This project simply aims to support scrollbars in small Bevy projects until Bevy does it natively. So the scope is small. Adding horizontal scrollbars would be the next (and likely final) goal.
+This project aims to provide simple support for scrollbars in Bevy projects until Bevy does it natively.
 
 ## Contributions
 
@@ -24,4 +24,4 @@ Feel free to open a small PR.
 
 | `bevy_scrollbar` | `bevy` |
 | :--              | :--    |
-| `0.1`            | `0.16` |
+| `0.1`-`0.3`      | `0.16` |

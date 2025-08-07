@@ -58,14 +58,17 @@ fn spawn_thumb_and_observers(mut world: DeferredWorld, HookContext { entity, .. 
     world.commands().queue(move |world: &mut World| {
         let Ok(mut scrollable) = world.get_entity_mut(scrollable) else {
             warn!(
-                "Scrollbar setup aborted. Scrollable entity {} does not exist anymore.",
+                "Scrollbar setup aborted. Scrollable entity {} does not exist.",
                 scrollable.index()
             );
             return;
         };
 
         let Some(mut node) = scrollable.get_mut::<Node>() else {
-            warn!("Scrollbar setup aborted. Scrollable entity is missing the Node component.");
+            warn!(
+                "Scrollbar setup aborted. Scrollable entity {} is missing the Node component.",
+                scrollable.id().index()
+            );
             return;
         };
 
@@ -91,10 +94,18 @@ fn spawn_thumb_and_observers(mut world: DeferredWorld, HookContext { entity, .. 
             scrollable.insert(ScrollableLineHeight::default());
         }
 
-        // Observe the scrollable node for mouse wheel `Scroll` triggers
-        scrollable.observe(scroll_on_wheel);
+        // Observe the scrollable node for mouse Scroll triggers
+        scrollable.observe(scroll_on_scroll);
 
-        // Spawn the thumb and observe it for `Drag` triggers
+        let Ok(scrollbar) = world.get_entity_mut(entity) else {
+            warn!(
+                "Scrollbar setup aborted. Scrollbar entity {} does not exist.",
+                entity.index()
+            );
+            return;
+        };
+
+        // Spawn the thumb and observe it for Drag triggers
         let node = match direction {
             ScrollDirection::Vertical => Node {
                 width: Val::Percent(100.0),
@@ -107,28 +118,29 @@ fn spawn_thumb_and_observers(mut world: DeferredWorld, HookContext { entity, .. 
                 ..default()
             },
         };
-        let Ok(scrollbar) = world.get_entity(entity) else {
-            warn!(
-                "Scrollbar setup aborted. Scrollbar entity {} does not exist anymore.",
-                entity.index()
-            );
-            return;
-        };
         let border_radius = *scrollbar.get::<BorderRadius>().unwrap();
         let thumb_color = scrollbar.get::<ThumbColor>().unwrap().0;
-        world
+        let thumb = world
             .spawn((
                 node,
                 ChildOf(entity),
                 border_radius,
                 BackgroundColor(thumb_color),
             ))
-            .observe(scroll_on_drag);
+            .observe(scroll_on_drag)
+            .id();
+
+        // Observe both the scrollbar and the thumb for Click triggers. The thumb is observed to stop
+        // trigger propagation to the track.
+        let observer = Observer::new(scroll_on_click)
+            .with_entity(entity)
+            .with_entity(thumb);
+        world.spawn(observer);
     });
 }
 
 /// Observer watching a [`Scrollable`] node for `Scroll` triggers.
-fn scroll_on_wheel(
+fn scroll_on_scroll(
     scroll: Trigger<Pointer<Scroll>>,
     q_scrollable: Query<(&ScrollSpeed, Option<&ScrollableLineHeight>)>,
     mut commands: Commands,
@@ -156,21 +168,77 @@ fn scroll_on_drag(
     let scrollbar = q_child_of.get(thumb)?.parent();
     let (&Scrollbar { scrollable }, drag_speed) = q_scrollbar.get(scrollbar)?;
     let overflow = q_node.get(scrollable)?.overflow;
-    let drag_delta = if overflow.y == OverflowAxis::Scroll {
+    let drag = if overflow.y == OverflowAxis::Scroll {
         drag.delta.y
     } else if overflow.x == OverflowAxis::Scroll {
         drag.delta.x
     } else {
         return Ok(());
     };
-    let drag = -drag_speed.0 * drag_delta;
-    commands.run_system_cached_with(scroll, (scrollable, drag));
+    let scroll = -drag_speed.0 * drag;
+    commands.run_system_cached_with(self::scroll, (scrollable, scroll));
+    Ok(())
+}
+
+/// Observer watching the [`Scrollbar`] for `Click` triggers.
+fn scroll_on_click(
+    mut click: Trigger<Pointer<Click>>,
+    q_scrollbar: Query<(&Scrollbar, &ComputedNode, &Children)>,
+    q_node: Query<(&Node, &ComputedNode)>,
+    mut commands: Commands,
+) -> Result {
+    let Some(click_position) = click.hit.position else {
+        warn!("Scrollbar Click observed but hit position is missing to move the thumb");
+        return Ok(());
+    };
+
+    let scrollbar = click.target();
+    let Ok((&Scrollbar { scrollable }, track_cnode, children)) = q_scrollbar.get(scrollbar) else {
+        // Stop propagation because the click observed is under the thumb
+        click.propagate(false);
+        return Ok(());
+    };
+
+    let thumb = children[0];
+    let (thumb_node, thumb_cnode) = q_node.get(thumb)?;
+    let (scrollable_node, scrollable_cnode) = q_node.get(scrollable)?;
+
+    let scroll = if scrollable_node.overflow.y == OverflowAxis::Scroll {
+        let track_cnode_scroll_height = track_cnode.size.y
+            - (track_cnode.border.top + track_cnode.border.bottom + thumb_cnode.size.y);
+        let top_margin = px(thumb_node.margin.top);
+        let top_margin_max = track_cnode.inverse_scale_factor * track_cnode_scroll_height;
+        let thumb_position = top_margin / top_margin_max;
+        debug!("click position: {}", click_position.y);
+        debug!("thumb position: {thumb_position}");
+        if thumb_position > click_position.y {
+            scrollable_cnode.size.y
+        } else {
+            -scrollable_cnode.size.y
+        }
+    } else if scrollable_node.overflow.x == OverflowAxis::Scroll {
+        let track_cnode_scroll_width = track_cnode.size.x
+            - (track_cnode.border.left + track_cnode.border.right + thumb_cnode.size.x);
+        let left_margin = px(thumb_node.margin.left);
+        let left_margin_max = track_cnode.inverse_scale_factor * track_cnode_scroll_width;
+        let thumb_position = left_margin / left_margin_max;
+        debug!("click position: {}", click_position.x);
+        debug!("thumb position: {thumb_position}");
+        if thumb_position > click_position.x {
+            scrollable_cnode.size.x
+        } else {
+            -scrollable_cnode.size.x
+        }
+    } else {
+        return Ok(());
+    };
+    commands.run_system_cached_with(self::scroll, (scrollable, scroll));
     Ok(())
 }
 
 /// Scrolls the `scrollable` node by `scroll` and moves the thumb of its [`Scrollbar`] proportionately.
 ///
-/// Helper function of [`scroll_on_drag`] and [`scroll_on_wheel`].
+/// Helper function of [`scroll_on_drag`] and [`scroll_on_scroll`].
 fn scroll(
     In((scrollable, scroll)): In<(Entity, f32)>,
     mut q_scrollable: Query<(&mut ScrollPosition, &Node, &ComputedNode, &Scrollable)>,
