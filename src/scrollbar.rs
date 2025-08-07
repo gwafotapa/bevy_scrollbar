@@ -16,11 +16,11 @@ use crate::{ScrollSpeed, Scrollable, ScrollableLineHeight};
 /// * spawn the _thumb_ of the scrollbar as its child;
 /// * spawn an observer watching the thumb for `Drag`triggers;
 ///
-/// The scroll speed of the mouse wheel can be configured by adding [`ScrollSpeed`] to the target. The color and drag speed of the thumb can be configured by adding [`ThumbColor`] and [`ThumbDragScale`] to the scrollbar.
+/// The scroll speed of the mouse wheel can be configured by adding [`ScrollSpeed`] to the target. The color and drag speed of the thumb can be configured by adding [`ThumbColor`] and [`DragSpeed`] to the scrollbar.
 
 #[derive(Component, Clone, Reflect, Debug)]
 #[relationship(relationship_target = Scrollable)]
-#[require(Node, ThumbColor, ThumbDragScale)]
+#[require(Node, ThumbColor, DragSpeed)]
 #[component(immutable)]
 #[component(on_add = spawn_thumb_and_observers)]
 pub struct Scrollbar {
@@ -39,16 +39,16 @@ pub struct ThumbColor(pub Color);
 ///
 /// This is unrelated to how fast the content scrolls when scrolling the mouse. See [`ScrollSpeed`] for that.
 #[derive(Component, Copy, Clone, Reflect, Debug)]
-pub struct ThumbDragScale(pub f32);
+pub struct DragSpeed(pub f32);
 
-impl Default for ThumbDragScale {
+impl Default for DragSpeed {
     fn default() -> Self {
         Self(Self::DEFAULT)
     }
 }
 
-impl ThumbDragScale {
-    /// Default value of [`ThumbDragScale`].
+impl DragSpeed {
+    /// Default value of [`DragSpeed`].
     pub const DEFAULT: f32 = 4.0;
 }
 
@@ -148,13 +148,13 @@ fn scroll_on_wheel(
 fn scroll_on_drag(
     drag: Trigger<Pointer<Drag>>,
     q_child_of: Query<&ChildOf>,
-    q_scrollbar: Query<(&Scrollbar, &ThumbDragScale)>,
+    q_scrollbar: Query<(&Scrollbar, &DragSpeed)>,
     q_node: Query<&Node>,
     mut commands: Commands,
 ) -> Result {
     let thumb = drag.target();
     let scrollbar = q_child_of.get(thumb)?.parent();
-    let (&Scrollbar { scrollable }, drag_scale) = q_scrollbar.get(scrollbar)?;
+    let (&Scrollbar { scrollable }, drag_speed) = q_scrollbar.get(scrollbar)?;
     let overflow = q_node.get(scrollable)?.overflow;
     let drag_delta = if overflow.y == OverflowAxis::Scroll {
         drag.delta.y
@@ -163,7 +163,7 @@ fn scroll_on_drag(
     } else {
         return Ok(());
     };
-    let drag = -drag_scale.0 * drag_delta;
+    let drag = -drag_speed.0 * drag_delta;
     commands.run_system_cached_with(scroll, (scrollable, drag));
     Ok(())
 }

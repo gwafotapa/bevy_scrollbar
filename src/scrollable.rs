@@ -26,7 +26,7 @@ impl Scrollable {
 
 /// Component of a [`Scrollable`] node configuring how fast its content scrolls when scrolling the mouse.
 ///
-/// This is unrelated to how fast the content scrolls when dragging the thumb of the [`Scrollbar`]. See [`ThumbDragScale`](super::ThumbDragScale) for that.
+/// This is unrelated to how fast the content scrolls when dragging the thumb of the [`Scrollbar`]. See [`DragSpeed`](super::DragSpeed) for that.
 #[derive(Component, Copy, Clone, Reflect, Debug)]
 pub struct ScrollSpeed(pub f32);
 
