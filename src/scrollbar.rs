@@ -10,11 +10,12 @@ use crate::{ScrollSpeed, Scrollable, ScrollableLineHeight};
 ///
 /// Add this component to an entity to turn it into a scrollbar. Doing so will:
 /// * add the `Node` component if it's not already present;
-/// * add a `Relationship` between the scrollbar and the targeted [`scrollable`](Self::scrollable) node, inserting [`Scrollable`] into the target which typically has overflowing content;
-/// * if the target does not have either `Node::overflow::x` or `Node::overflow::y` set to `OverflowAxis::Scroll`, then set its `Node::overflow::y` to `OverflowAxis::Scroll` and configure the scrollbar vertical;
-/// * spawn an observer watching the target for mouse wheel `Scroll` triggers;
+/// * add a `Relationship` between the scrollbar and the `scrollable` entity, inserting [`Scrollable`] into the target which typically has overflowing content;
+/// * if the target does not have either `Node::overflow::y` or `Node::overflow::x` set to `OverflowAxis::Scroll`, then set `Node::overflow::y` to `OverflowAxis::Scroll` and configure the scrollbar vertical;
 /// * spawn the _thumb_ of the scrollbar as its child;
-/// * spawn an observer watching the thumb for `Drag`triggers;
+/// * spawn an observer watching the target for `Scroll` triggers;
+/// * spawn an observer watching the thumb for `Drag` triggers;
+/// * spawn an observer watching this entity for `Click` triggers.
 ///
 /// The scroll speed of the mouse wheel can be configured by adding [`ScrollSpeed`] to the target. The color and drag speed of the thumb can be configured by adding [`ThumbColor`] and [`DragSpeed`] to the scrollbar.
 
@@ -95,7 +96,7 @@ fn spawn_thumb_and_observers(mut world: DeferredWorld, HookContext { entity, .. 
         }
 
         // Observe the scrollable node for mouse Scroll triggers
-        scrollable.observe(scroll_on_scroll);
+        scrollable.observe(scroll_content_on_mouse_scroll);
 
         let Ok(scrollbar) = world.get_entity_mut(entity) else {
             warn!(
@@ -127,12 +128,12 @@ fn spawn_thumb_and_observers(mut world: DeferredWorld, HookContext { entity, .. 
                 border_radius,
                 BackgroundColor(thumb_color),
             ))
-            .observe(scroll_on_drag)
+            .observe(scroll_content_on_thumb_drag)
             .id();
 
         // Observe both the scrollbar and the thumb for Click triggers. The thumb is observed to stop
         // trigger propagation to the track.
-        let observer = Observer::new(jump_on_click)
+        let observer = Observer::new(jump_content_on_trough_click)
             .with_entity(entity)
             .with_entity(thumb);
         world.spawn(observer);
@@ -140,7 +141,7 @@ fn spawn_thumb_and_observers(mut world: DeferredWorld, HookContext { entity, .. 
 }
 
 /// Observer watching a [`Scrollable`] node for `Scroll` triggers.
-fn scroll_on_scroll(
+fn scroll_content_on_mouse_scroll(
     scroll: Trigger<Pointer<Scroll>>,
     mut q_scrollable: Query<(
         &mut ScrollPosition,
@@ -166,7 +167,7 @@ fn scroll_on_scroll(
 }
 
 /// Observer watching the thumb of the [`Scrollbar`] for `Drag` triggers.
-fn scroll_on_drag(
+fn scroll_content_on_thumb_drag(
     drag: Trigger<Pointer<Drag>>,
     q_child_of: Query<&ChildOf>,
     q_scrollbar: Query<(&Scrollbar, &DragSpeed)>,
@@ -184,10 +185,10 @@ fn scroll_on_drag(
     Ok(())
 }
 
-/// Observer watching the [`Scrollbar`] for `Click` triggers.
+/// Observer watching both the [`Scrollbar`] and its thumb for `Click` triggers.
 ///
-/// This observer is spawned by a [`Scrollbar`] and watches both the track and the thumb. Clicks on the thumb are discarded before they propagate to the track. The ScrollPosition of the content is adjusted. This change will be detected by update_thumb which will update the position of the thumb.
-fn jump_on_click(
+/// This observer handles clicking the trough (i.e. the region of the track not covered by the thumb). When clicked, the thumb jumps to that position. This is achieved by discarding clicks on the thumb before they propagate to the track. This system only adjusts the ScrollPosition of the content. update_thumb() will see the change and update the thumb position as a result.
+fn jump_content_on_trough_click(
     mut click: Trigger<Pointer<Click>>,
     q_scrollbar: Query<(&Scrollbar, &ComputedNode, &Children)>,
     q_node: Query<(&Node, &ComputedNode)>,
@@ -200,7 +201,7 @@ fn jump_on_click(
 
     let scrollbar = click.target();
     let Ok((&Scrollbar { scrollable }, track_cnode, children)) = q_scrollbar.get(scrollbar) else {
-        // Stop propagation because the thumb was clicked
+        // Discard event because the thumb was clicked
         click.propagate(false);
         return Ok(());
     };

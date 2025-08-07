@@ -2,7 +2,7 @@ use bevy::{prelude::*, text::LineHeight};
 
 use crate::Scrollbar;
 
-/// Component of a `Node` with overflowing content linking it to a [`Scrollbar`].
+/// Component of a `Node` with overflowing content and linked to a [`Scrollbar`].
 ///
 /// Adding this component to an entity makes it the `RelationshipTarget` of a [`Scrollbar`] entity. Despawning this entity will also despawn that [`Scrollbar`] entity. See [`Scrollbar`] for more information.
 ///

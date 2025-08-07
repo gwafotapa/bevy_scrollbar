@@ -6,7 +6,7 @@
 //!
 //! # Making a scrollbar
 //!
-//! The two pieces of a scrollbar are referred to as the _track_ and the _thumb_.  You can turn an entity into a scrollbar (track) by adding [`Scrollbar { scrollable }`](Scrollbar) to it, where `scrollable` is the entity Id of another node with overflowing content. This spawns the thumb as the child of the track along with a couple observers. See [`Scrollbar`] for more details.
+//! The two pieces of a scrollbar are referred to as the _track_ and the _thumb_.  You can turn an entity into a scrollbar (track) by adding [`Scrollbar { scrollable }`](Scrollbar) to it, where `scrollable` is the entity Id of another node with overflowing content. This spawns the thumb as the child of the track along with three observers. See [`Scrollbar`] for more details.
 //!
 //! # Example 1
 //!
@@ -164,12 +164,6 @@
 mod scrollable;
 mod scrollbar;
 
-#[deprecated(since = "0.2.0", note = "Renamed ScrollSpeed.")]
-pub use ScrollSpeed as ScrollableScrollScale;
-
-#[deprecated(since = "0.2.0", note = "Renamed DragSpeed.")]
-pub use DragSpeed as ThumbDragScale;
-
 use bevy::{prelude::*, ui::UiSystem};
 pub use scrollable::{ScrollSpeed, Scrollable, ScrollableLineHeight};
 pub use scrollbar::{DragSpeed, Scrollbar, ThumbColor};
@@ -177,7 +171,7 @@ pub use scrollbar::{DragSpeed, Scrollbar, ThumbColor};
 /// Plugin scheduling [`ScrollbarSystem`] after `UiSystem::Layout` in `PostUpdate`.
 pub struct ScrollbarPlugin;
 
-/// `SystemSet` containing the system updating the length of the [`Scrollbar`].
+/// `SystemSet` containing the system updating the thumb of the [`Scrollbar`].
 #[derive(SystemSet, Clone, Eq, PartialEq, Hash, Debug)]
 pub struct ScrollbarSystem;
 
@@ -199,7 +193,7 @@ impl Plugin for ScrollbarPlugin {
 
 /// Updates the length and position of the thumb.
 ///
-/// Bevy computes layout and `Transform` of UI nodes in `UiSystem::Layout`. This system runs in `PostUpdate` after `UiSystem::Layout` and uses change detection on the [`Scrollable`] node. Graphically, the thumb is updated on the frame following the change. This avoids some computation.
+/// Bevy computes layout and `Transform` of UI nodes in `UiSystem::Layout`. This system runs in `PostUpdate` after `UiSystem::Layout` and uses change detection on the [`Scrollable`] node. Graphically, the thumb is updated on the frame following the change. This allows us to use the computation done by `UiSystem::Layout` instead of redoing it.
 fn update_thumb(
     q_changed_scrollable: Query<
         (&Scrollable, &Node, Ref<ComputedNode>),
