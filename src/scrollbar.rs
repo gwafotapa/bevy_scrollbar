@@ -132,7 +132,7 @@ fn spawn_thumb_and_observers(mut world: DeferredWorld, HookContext { entity, .. 
 
         // Observe both the scrollbar and the thumb for Click triggers. The thumb is observed to stop
         // trigger propagation to the track.
-        let observer = Observer::new(scroll_on_click)
+        let observer = Observer::new(jump_on_click)
             .with_entity(entity)
             .with_entity(thumb);
         world.spawn(observer);
@@ -142,17 +142,26 @@ fn spawn_thumb_and_observers(mut world: DeferredWorld, HookContext { entity, .. 
 /// Observer watching a [`Scrollable`] node for `Scroll` triggers.
 fn scroll_on_scroll(
     scroll: Trigger<Pointer<Scroll>>,
-    q_scrollable: Query<(&ScrollSpeed, Option<&ScrollableLineHeight>)>,
-    mut commands: Commands,
+    mut q_scrollable: Query<(
+        &mut ScrollPosition,
+        &Node,
+        &ScrollSpeed,
+        Option<&ScrollableLineHeight>,
+    )>,
 ) -> Result {
     let scrollable = scroll.target();
-    let (scroll_speed, line_height) = q_scrollable.get(scrollable)?;
+    let (mut scroll_position, node, scroll_speed, line_height) =
+        q_scrollable.get_mut(scrollable)?;
     let mouse_scroll = match (scroll.unit, line_height) {
         (MouseScrollUnit::Line, Some(line_height)) => scroll.y * line_height.px(),
         _ => scroll.y,
     };
     let scroll = scroll_speed.0 * mouse_scroll;
-    commands.run_system_cached_with(self::scroll, (scrollable, scroll));
+    if node.overflow.y == OverflowAxis::Scroll {
+        scroll_position.offset_y -= scroll;
+    } else if node.overflow.x == OverflowAxis::Scroll {
+        scroll_position.offset_x -= scroll;
+    };
     Ok(())
 }
 
@@ -161,31 +170,28 @@ fn scroll_on_drag(
     drag: Trigger<Pointer<Drag>>,
     q_child_of: Query<&ChildOf>,
     q_scrollbar: Query<(&Scrollbar, &DragSpeed)>,
-    q_node: Query<&Node>,
-    mut commands: Commands,
+    mut q_scrollable: Query<(&mut ScrollPosition, &Node)>,
 ) -> Result {
     let thumb = drag.target();
     let scrollbar = q_child_of.get(thumb)?.parent();
     let (&Scrollbar { scrollable }, drag_speed) = q_scrollbar.get(scrollbar)?;
-    let overflow = q_node.get(scrollable)?.overflow;
-    let drag = if overflow.y == OverflowAxis::Scroll {
-        drag.delta.y
-    } else if overflow.x == OverflowAxis::Scroll {
-        drag.delta.x
-    } else {
-        return Ok(());
+    let (mut scroll_position, node) = q_scrollable.get_mut(scrollable)?;
+    if node.overflow.y == OverflowAxis::Scroll {
+        scroll_position.offset_y += drag_speed.0 * drag.delta.y;
+    } else if node.overflow.x == OverflowAxis::Scroll {
+        scroll_position.offset_x += drag_speed.0 * drag.delta.x;
     };
-    let scroll = -drag_speed.0 * drag;
-    commands.run_system_cached_with(self::scroll, (scrollable, scroll));
     Ok(())
 }
 
 /// Observer watching the [`Scrollbar`] for `Click` triggers.
-fn scroll_on_click(
+///
+/// This observer is spawned by a [`Scrollbar`] and watches both the track and the thumb. Clicks on the thumb are discarded before they propagate to the track. The ScrollPosition of the content is adjusted. This change will be detected by update_thumb which will update the position of the thumb.
+fn jump_on_click(
     mut click: Trigger<Pointer<Click>>,
     q_scrollbar: Query<(&Scrollbar, &ComputedNode, &Children)>,
     q_node: Query<(&Node, &ComputedNode)>,
-    mut commands: Commands,
+    mut q_scroll_position: Query<&mut ScrollPosition>,
 ) -> Result {
     let Some(click_position) = click.hit.position else {
         warn!("Scrollbar Click observed but hit position is missing to move the thumb");
@@ -194,111 +200,34 @@ fn scroll_on_click(
 
     let scrollbar = click.target();
     let Ok((&Scrollbar { scrollable }, track_cnode, children)) = q_scrollbar.get(scrollbar) else {
-        // Stop propagation because the click observed is under the thumb
+        // Stop propagation because the thumb was clicked
         click.propagate(false);
         return Ok(());
     };
 
     let thumb = children[0];
-    let (thumb_node, thumb_cnode) = q_node.get(thumb)?;
+    let (_, thumb_cnode) = q_node.get(thumb)?;
     let (scrollable_node, scrollable_cnode) = q_node.get(scrollable)?;
-
-    let scroll = if scrollable_node.overflow.y == OverflowAxis::Scroll {
-        let track_cnode_scroll_height = track_cnode.size.y
-            - (track_cnode.border.top + track_cnode.border.bottom + thumb_cnode.size.y);
-        let top_margin = px(thumb_node.margin.top);
-        let top_margin_max = track_cnode.inverse_scale_factor * track_cnode_scroll_height;
-        let thumb_position = top_margin / top_margin_max;
-        debug!("click position: {}", click_position.y);
-        debug!("thumb position: {thumb_position}");
-        if thumb_position > click_position.y {
-            scrollable_cnode.size.y
-        } else {
-            -scrollable_cnode.size.y
-        }
-    } else if scrollable_node.overflow.x == OverflowAxis::Scroll {
-        let track_cnode_scroll_width = track_cnode.size.x
-            - (track_cnode.border.left + track_cnode.border.right + thumb_cnode.size.x);
-        let left_margin = px(thumb_node.margin.left);
-        let left_margin_max = track_cnode.inverse_scale_factor * track_cnode_scroll_width;
-        let thumb_position = left_margin / left_margin_max;
-        debug!("click position: {}", click_position.x);
-        debug!("thumb position: {thumb_position}");
-        if thumb_position > click_position.x {
-            scrollable_cnode.size.x
-        } else {
-            -scrollable_cnode.size.x
-        }
-    } else {
-        return Ok(());
-    };
-    commands.run_system_cached_with(self::scroll, (scrollable, scroll));
-    Ok(())
-}
-
-/// Scrolls the `scrollable` node by `scroll` and moves the thumb of its [`Scrollbar`] proportionately.
-///
-/// Helper function of [`scroll_on_drag`] and [`scroll_on_scroll`].
-fn scroll(
-    In((scrollable, scroll)): In<(Entity, f32)>,
-    mut q_scrollable: Query<(&mut ScrollPosition, &Node, &ComputedNode, &Scrollable)>,
-    q_scrollbar: Query<(&ComputedNode, &Children)>,
-    mut q_thumb: Query<(&mut Node, &ComputedNode), Without<Scrollable>>,
-) {
-    let (mut scrollable_position, scrollable_node, scrollable_cnode, scrollable) =
-        q_scrollable.get_mut(scrollable).unwrap();
-    let (track_cnode, track_children) = q_scrollbar.get(scrollable.scrollbar()).unwrap();
-    let (mut thumb_node, thumb_cnode) = q_thumb.get_mut(track_children[0]).unwrap();
+    let mut scroll_position = q_scroll_position.get_mut(scrollable)?;
 
     if scrollable_node.overflow.y == OverflowAxis::Scroll {
-        scrollable_position.offset_y -= scroll;
-        let track_cnode_scroll_height = track_cnode.size.y
-            - (track_cnode.border.top + track_cnode.border.bottom + thumb_cnode.size.y);
-        let scrollable_cnode_scroll_height =
-            scrollable_cnode.size.y - scrollable_cnode.content_size.y;
-        let ratio = track_cnode_scroll_height / scrollable_cnode_scroll_height;
-        let track_scroll = ratio * scroll;
-        let top_margin = &mut thumb_node.margin.top;
-        let top_margin_max = track_cnode.inverse_scale_factor * track_cnode_scroll_height;
-        *top_margin = Val::Px(0f32.max(top_margin_max.min(px(*top_margin) + track_scroll)));
-
-        debug!("track computed height: {}", track_cnode.size.y);
-        debug!("thumb computed height: {}", thumb_cnode.size.y);
-        debug!("track computed scroll height: {track_cnode_scroll_height}");
-        debug!(
-            "scaled top margin: {}\n",
-            px(*top_margin) / track_cnode.inverse_scale_factor
-        );
+        let click_y = (thumb_cnode.size.y / 2.0)
+            .max(click_position.y * track_cnode.size.y)
+            .min(track_cnode.size.y - thumb_cnode.size.y / 2.0);
+        let ratio =
+            (click_y - thumb_cnode.size.y / 2.0) / (track_cnode.size.y - thumb_cnode.size.y);
+        scroll_position.offset_y = track_cnode.inverse_scale_factor
+            * ratio
+            * (scrollable_cnode.content_size.y - scrollable_cnode.size.y);
     } else if scrollable_node.overflow.x == OverflowAxis::Scroll {
-        scrollable_position.offset_x -= scroll;
-        let track_cnode_scroll_width = track_cnode.size.x
-            - (track_cnode.border.left + track_cnode.border.right + thumb_cnode.size.x);
-        let scrollable_cnode_scroll_width =
-            scrollable_cnode.size.x - scrollable_cnode.content_size.x;
-        let ratio = track_cnode_scroll_width / scrollable_cnode_scroll_width;
-        let track_scroll = ratio * scroll;
-        let left_margin = &mut thumb_node.margin.left;
-        let left_margin_max = track_cnode.inverse_scale_factor * track_cnode_scroll_width;
-        *left_margin = Val::Px(0f32.max(left_margin_max.min(px(*left_margin) + track_scroll)));
-
-        debug!("track computed width: {}", track_cnode.size.x);
-        debug!("thumb computed width: {}", thumb_cnode.size.x);
-        debug!("track computed scroll width: {track_cnode_scroll_width}");
-        debug!(
-            "scaled left margin: {}\n",
-            px(*left_margin) / track_cnode.inverse_scale_factor
-        );
-    }
-}
-
-/// Unwraps a `Val::Px` enum variant into its corresponding pixel value.
-///
-/// # Panics
-///
-/// Panics for all others variants.
-fn px(val: Val) -> f32 {
-    match val {
-        Val::Px(px) => px,
-        _ => panic!("Wrong variant '{val:?}'. Expected Val::Px"),
-    }
+        let click_x = (thumb_cnode.size.x / 2.0)
+            .max(click_position.x * track_cnode.size.x)
+            .min(track_cnode.size.x - thumb_cnode.size.x / 2.0);
+        let ratio =
+            (click_x - thumb_cnode.size.x / 2.0) / (track_cnode.size.x - thumb_cnode.size.x);
+        scroll_position.offset_x = track_cnode.inverse_scale_factor
+            * ratio
+            * (scrollable_cnode.content_size.x - scrollable_cnode.size.x);
+    };
+    Ok(())
 }

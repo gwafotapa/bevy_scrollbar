@@ -192,39 +192,76 @@ impl Plugin for ScrollbarPlugin {
 
         app.add_systems(
             PostUpdate,
-            update_thumb_length
-                .after(UiSystem::Layout)
-                .in_set(ScrollbarSystem),
+            update_thumb.after(UiSystem::Layout).in_set(ScrollbarSystem),
         );
     }
 }
 
-/// Updates the length of the thumb.
+/// Updates the length and position of the thumb.
 ///
-/// Bevy computes layout and `Transform` of UI nodes in `UiSystem::Layout`. This system runs in `PostUpdate` after `UiSystem::Layout` and uses change detection on the `ComputedNode` of the [`Scrollable`] node. Graphically, the length of the thumb is updated on the frame following the change. That tradeoff avoids computing the size of the [`Scrollable`] content.
-fn update_thumb_length(
-    q_changed_scrollable: Query<(&Scrollable, &Node, &ComputedNode), Changed<ComputedNode>>,
+/// Bevy computes layout and `Transform` of UI nodes in `UiSystem::Layout`. This system runs in `PostUpdate` after `UiSystem::Layout` and uses change detection on the [`Scrollable`] node. Graphically, the thumb is updated on the frame following the change. This avoids some computation.
+fn update_thumb(
+    q_changed_scrollable: Query<
+        (&Scrollable, &Node, Ref<ComputedNode>),
+        Or<(Changed<ComputedNode>, Changed<ScrollPosition>)>,
+    >,
     q_children: Query<&Children>,
     mut q_node: Query<&mut Node, Without<Scrollable>>,
+    mut commands: Commands,
 ) -> Result {
     for (scrollable, scrollable_node, scrollable_cnode) in &q_changed_scrollable {
         let thumb = q_children.get(scrollable.scrollbar())?[0];
-        let mut thumb_node = q_node.get_mut(thumb)?;
-        if scrollable_node.overflow.y == OverflowAxis::Scroll {
-            let ratio = scrollable_cnode.size.y / scrollable_cnode.content_size.y;
-            thumb_node.height = Val::Percent(ratio * 100.0);
-            debug!(
-                "Thumb height = {} / {} = {}%",
-                scrollable_cnode.size.y, scrollable_cnode.content_size.y, ratio
-            );
-        } else if scrollable_node.overflow.x == OverflowAxis::Scroll {
-            let ratio = scrollable_cnode.size.x / scrollable_cnode.content_size.x;
-            thumb_node.width = Val::Percent(ratio * 100.0);
-            debug!(
-                "Thumb width = {} / {} = {}%",
-                scrollable_cnode.size.x, scrollable_cnode.content_size.x, ratio
-            );
+        commands.run_system_cached_with(update_thumb_position, thumb);
+
+        // Recompute thumb length only if the content changed, not if it was merely scrolled
+        if scrollable_cnode.is_changed() {
+            let mut thumb_node = q_node.get_mut(thumb)?;
+            if scrollable_node.overflow.y == OverflowAxis::Scroll {
+                let ratio = scrollable_cnode.size.y / scrollable_cnode.content_size.y;
+                thumb_node.height = Val::Percent(ratio * 100.0);
+            } else if scrollable_node.overflow.x == OverflowAxis::Scroll {
+                let ratio = scrollable_cnode.size.x / scrollable_cnode.content_size.x;
+                thumb_node.width = Val::Percent(ratio * 100.0);
+            }
         }
     }
     Ok(())
+}
+
+/// Updates the position of the thumb.
+fn update_thumb_position(
+    In(thumb): In<Entity>,
+    mut q_thumb: Query<(&mut Node, &ComputedNode, &ChildOf), Without<Scrollable>>,
+    q_scrollbar: Query<(&Scrollbar, &ComputedNode)>,
+    q_scrollable: Query<(&Node, &ComputedNode, &ScrollPosition), With<Scrollable>>,
+) {
+    let (mut thumb_node, thumb_cnode, child_of) = q_thumb.get_mut(thumb).unwrap();
+    let scrollbar = child_of.parent();
+    let (&Scrollbar { scrollable }, track_cnode) = q_scrollbar.get(scrollbar).unwrap();
+    let (scrollable_node, scrollable_cnode, scroll_position) =
+        q_scrollable.get(scrollable).unwrap();
+
+    if scrollable_node.overflow.y == OverflowAxis::Scroll {
+        let ratio =
+            scroll_position.offset_y / (scrollable_cnode.content_size.y - scrollable_cnode.size.y);
+        let track_cnode_scroll_height = track_cnode.size.y
+            - (track_cnode.border.top + track_cnode.border.bottom + thumb_cnode.size.y);
+        let top_margin_max = track_cnode.inverse_scale_factor * track_cnode_scroll_height;
+        thumb_node.margin.top = Val::Px(ratio * top_margin_max);
+        debug!(
+            "Thumb height = {} / {} = {}%",
+            scrollable_cnode.size.y, scrollable_cnode.content_size.y, ratio
+        );
+    } else if scrollable_node.overflow.x == OverflowAxis::Scroll {
+        let ratio =
+            scroll_position.offset_x / (scrollable_cnode.content_size.x - scrollable_cnode.size.x);
+        let track_cnode_scroll_width = track_cnode.size.x
+            - (track_cnode.border.left + track_cnode.border.right + thumb_cnode.size.x);
+        let left_margin_max = track_cnode.inverse_scale_factor * track_cnode_scroll_width;
+        thumb_node.margin.left = Val::Px(ratio * left_margin_max);
+        debug!(
+            "Thumb width = {} / {} = {}%",
+            scrollable_cnode.size.x, scrollable_cnode.content_size.x, ratio
+        );
+    }
 }

@@ -2,7 +2,7 @@
 
 ## 0.3.0
 
-* Move the thumb when the track is clicked outside it
+* Have the thumb jump when the trough is clicked
 * Remove deprecated `ThumbScrollScale`
 * Remove deprecate `ScrollableScrollScale`
 
