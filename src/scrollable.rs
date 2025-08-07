@@ -11,7 +11,7 @@ use crate::Scrollbar;
 /// * or inserted via `SpawnRelated::spawn_one` (see [example 2](crate#example-2)).
 #[derive(Component, Clone, Reflect, Debug)]
 #[relationship_target(relationship = Scrollbar, linked_spawn)]
-#[require(Node, ScrollableScrollScale)]
+#[require(Node, ScrollSpeed)]
 pub struct Scrollable {
     /// The [`Scrollbar`] entity of this scrollable entity.
     scrollbar: Entity,
@@ -28,16 +28,16 @@ impl Scrollable {
 ///
 /// This is unrelated to how fast the content scrolls when dragging the thumb of the [`Scrollbar`]. See [`ThumbDragScale`](super::ThumbDragScale) for that.
 #[derive(Component, Copy, Clone, Reflect, Debug)]
-pub struct ScrollableScrollScale(pub f32);
+pub struct ScrollSpeed(pub f32);
 
-impl Default for ScrollableScrollScale {
+impl Default for ScrollSpeed {
     fn default() -> Self {
         Self(Self::DEFAULT)
     }
 }
 
-impl ScrollableScrollScale {
-    /// Default value of [`ScrollableScrollScale`].
+impl ScrollSpeed {
+    /// Default value of [`ScrollSpeed`].
     pub const DEFAULT: f32 = 1.0;
 }
 

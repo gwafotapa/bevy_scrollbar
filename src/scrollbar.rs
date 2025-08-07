@@ -4,7 +4,7 @@ use bevy::{
     prelude::*,
 };
 
-use crate::{Scrollable, ScrollableLineHeight, ScrollableScrollScale};
+use crate::{ScrollSpeed, Scrollable, ScrollableLineHeight};
 
 /// Component of a scrollbar `Node`.
 ///
@@ -16,7 +16,7 @@ use crate::{Scrollable, ScrollableLineHeight, ScrollableScrollScale};
 /// * spawn the _thumb_ of the scrollbar as its child;
 /// * spawn an observer watching the thumb for `Drag`triggers;
 ///
-/// The scroll speed of the mouse wheel can be configured by adding [`ScrollableScrollScale`] to the target. The color and drag speed of the thumb can be configured by adding [`ThumbColor`] and [`ThumbDragScale`] to the scrollbar.
+/// The scroll speed of the mouse wheel can be configured by adding [`ScrollSpeed`] to the target. The color and drag speed of the thumb can be configured by adding [`ThumbColor`] and [`ThumbDragScale`] to the scrollbar.
 
 #[derive(Component, Clone, Reflect, Debug)]
 #[relationship(relationship_target = Scrollable)]
@@ -37,7 +37,7 @@ pub struct ThumbColor(pub Color);
 
 /// Component of a [`Scrollbar`] configuring how fast its thumb moves when dragged.
 ///
-/// This is unrelated to how fast the content scrolls when scrolling the mouse. See [`ScrollableScrollScale`] for that.
+/// This is unrelated to how fast the content scrolls when scrolling the mouse. See [`ScrollSpeed`] for that.
 #[derive(Component, Copy, Clone, Reflect, Debug)]
 pub struct ThumbDragScale(pub f32);
 
@@ -130,16 +130,16 @@ fn spawn_thumb_and_observers(mut world: DeferredWorld, HookContext { entity, .. 
 /// Observer watching a [`Scrollable`] node for `Scroll` triggers.
 fn scroll_on_wheel(
     scroll: Trigger<Pointer<Scroll>>,
-    q_scrollable: Query<(&ScrollableScrollScale, Option<&ScrollableLineHeight>)>,
+    q_scrollable: Query<(&ScrollSpeed, Option<&ScrollableLineHeight>)>,
     mut commands: Commands,
 ) -> Result {
     let scrollable = scroll.target();
-    let (scroll_scale, line_height) = q_scrollable.get(scrollable)?;
+    let (scroll_speed, line_height) = q_scrollable.get(scrollable)?;
     let mouse_scroll = match (scroll.unit, line_height) {
         (MouseScrollUnit::Line, Some(line_height)) => scroll.y * line_height.px(),
         _ => scroll.y,
     };
-    let scroll = scroll_scale.0 * mouse_scroll;
+    let scroll = scroll_speed.0 * mouse_scroll;
     commands.run_system_cached_with(self::scroll, (scrollable, scroll));
     Ok(())
 }

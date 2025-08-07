@@ -4,7 +4,8 @@
 
 * Add support for horizontal scrollbars
 * Add an example of an horizontal scrollbar
-* Rename `ThumbScrollScale` `ThumbDragScale`
+* Rename `ThumbScrollScale` to `ThumbDragScale`
+* Deprecate `ScrollableScrollScale` in favor of `ScrollSpeed`
 * Make `ThumbColor` immutable
 * Improve documentation
 

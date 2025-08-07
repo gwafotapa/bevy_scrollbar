@@ -78,7 +78,7 @@
 //!
 //! # The [`Scrollable`] content
 //!
-//! The [`Scrollable`] content responds to mouse wheel `Scroll` triggers. You can configure how fast the content scrolls by adding [`ScrollableScrollScale`] to the [`Scrollable`] node. See [example 2](crate#example-2).
+//! The [`Scrollable`] content responds to mouse `Scroll` triggers. You can configure how fast the content scrolls by adding [`ScrollSpeed`] to the [`Scrollable`] node. See [example 2](crate#example-2).
 //!
 //! # Thumb customization
 //!
@@ -89,7 +89,7 @@
 //!```no_run
 //! use bevy::{ecs::spawn::SpawnIter, prelude::*};
 //! use bevy_scrollbar::{
-//!     Scrollable, ScrollableScrollScale, ScrollbarPlugin, ThumbColor, ThumbDragScale,
+//!     Scrollable, ScrollSpeed, ScrollbarPlugin, ThumbColor, ThumbDragScale,
 //! };
 //!
 //! fn main() {
@@ -136,7 +136,7 @@
 //!             )
 //!         }))),
 //!         // Customize scroll speed of the content
-//!         ScrollableScrollScale(2.0),
+//!         ScrollSpeed(2.0),
 //!         // Spawn the scrollbar
 //!         Scrollable::spawn_one((
 //!             // Add the scrollbar as a child of the container
@@ -164,10 +164,12 @@
 mod scrollable;
 mod scrollbar;
 
-pub use scrollable::{Scrollable, ScrollableLineHeight, ScrollableScrollScale};
-pub use scrollbar::{Scrollbar, ThumbColor, ThumbDragScale};
+#[deprecated(since = "0.2.0", note = "Renamed ScrollSpeed.")]
+pub use ScrollSpeed as ScrollableScrollScale;
 
 use bevy::{prelude::*, ui::UiSystem};
+pub use scrollable::{ScrollSpeed, Scrollable, ScrollableLineHeight};
+pub use scrollbar::{Scrollbar, ThumbColor, ThumbDragScale};
 
 /// Plugin scheduling [`ScrollbarSystem`] after `UiSystem::Layout` in `PostUpdate`.
 pub struct ScrollbarPlugin;
@@ -182,7 +184,7 @@ impl Plugin for ScrollbarPlugin {
             .register_type::<Scrollable>()
             .register_type::<ThumbColor>()
             .register_type::<ThumbDragScale>()
-            .register_type::<ScrollableScrollScale>()
+            .register_type::<ScrollSpeed>()
             .register_type::<ScrollableLineHeight>();
 
         app.add_systems(

@@ -1,9 +1,7 @@
 //! Example showing how to spawn a vertical scrollbar from the scrollable node.
 
 use bevy::{ecs::spawn::SpawnIter, prelude::*};
-use bevy_scrollbar::{
-    Scrollable, ScrollableScrollScale, ScrollbarPlugin, ThumbColor, ThumbDragScale,
-};
+use bevy_scrollbar::{ScrollSpeed, Scrollable, ScrollbarPlugin, ThumbColor, ThumbDragScale};
 
 fn main() {
     App::new()
@@ -49,7 +47,7 @@ fn setup(mut commands: Commands) {
             )
         }))),
         // Customize scroll speed of the content
-        ScrollableScrollScale(2.0),
+        ScrollSpeed(2.0),
         // Spawn the scrollbar
         Scrollable::spawn_one((
             // Add the scrollbar as a child of the container
