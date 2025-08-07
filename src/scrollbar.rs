@@ -6,17 +6,17 @@ use bevy::{
 
 use crate::{Scrollable, ScrollableLineHeight, ScrollableScrollScale};
 
-/// Component of a scrollbar node.
+/// Component of a scrollbar `Node`.
 ///
-/// Adding this component to an entity (referred to hereafter as the scrollbar) will:
+/// Add this component to an entity to turn it into a scrollbar. Doing so will:
 /// * add the `Node` component if it's not already present;
-/// * add a `Relationship` between the scrollbar and the targeted [`scrollable`](Self::scrollable) node, inserting [`Scrollable`] into the target.
-/// * The target typically has overflowing content. if the target does not have either `Node::overflow::x` or `Node::overflow::y` set to `OverflowAxis::Scroll`, then its `Node::overflow::y` is set to `OverflowAxis::Scroll` and the scrollbar is configured vertical;
-/// * spawn an observer watching the target for mouse wheel `Scroll` triggers.
+/// * add a `Relationship` between the scrollbar and the targeted [`scrollable`](Self::scrollable) node, inserting [`Scrollable`] into the target which typically has overflowing content;
+/// * if the target does not have either `Node::overflow::x` or `Node::overflow::y` set to `OverflowAxis::Scroll`, then set its `Node::overflow::y` to `OverflowAxis::Scroll` and configure the scrollbar vertical;
+/// * spawn an observer watching the target for mouse wheel `Scroll` triggers;
 /// * spawn the _thumb_ of the scrollbar as its child;
 /// * spawn an observer watching the thumb for `Drag`triggers;
 ///
-/// The scroll speed of the mouse wheel can be configured by adding [`ScrollableScrollSpeed`] to the target. The color and drag speed of the thumb can be configured by adding [`ThumbColor`] and [`ThumbDragScale`] to the scrollbar.
+/// The scroll speed of the mouse wheel can be configured by adding [`ScrollableScrollScale`] to the target. The color and drag speed of the thumb can be configured by adding [`ThumbColor`] and [`ThumbDragScale`] to the scrollbar.
 
 #[derive(Component, Clone, Reflect, Debug)]
 #[relationship(relationship_target = Scrollable)]
@@ -28,14 +28,16 @@ pub struct Scrollbar {
     pub scrollable: Entity,
 }
 
-/// Component added to the [`Scrollbar`] to configure the color of its thumb.
+/// Component of a [`Scrollbar`] configuring the color of its thumb.
 ///
 /// This component is immutable to remind you it is only used at the spawning of the [`Scrollbar`]. If you want to change the color of the thumb afterwards, mutate its `Color` component directly.
 #[derive(Component, Default, Copy, Clone, Reflect, Debug)]
 #[component(immutable)]
 pub struct ThumbColor(pub Color);
 
-/// Component added to the [`Scrollbar`] to configure how many pixels its thumb is moved per `Drag::delta` unit.
+/// Component of a [`Scrollbar`] configuring how fast its thumb moves when dragged.
+///
+/// This is unrelated to how fast the content scrolls when scrolling the mouse. See [`ScrollableScrollScale`] for that.
 #[derive(Component, Copy, Clone, Reflect, Debug)]
 pub struct ThumbDragScale(pub f32);
 

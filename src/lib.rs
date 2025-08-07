@@ -6,7 +6,7 @@
 //!
 //! # Making a scrollbar
 //!
-//! The two pieces of a scrollbar are referred to as the _track_ and the _thumb_.  You can turn an entity into a scrollbar (track) by adding [`Scrollbar { scrollable }`](Scrollbar) to it, where `scrollable` is the entity Id of another node which is usually overflowed (i.e. with overflowing content). This spawns the thumb as the child of the track along with a couple observers. See [`Scrollbar`] for more details.
+//! The two pieces of a scrollbar are referred to as the _track_ and the _thumb_.  You can turn an entity into a scrollbar (track) by adding [`Scrollbar { scrollable }`](Scrollbar) to it, where `scrollable` is the entity Id of another node with overflowing content. This spawns the thumb as the child of the track along with a couple observers. See [`Scrollbar`] for more details.
 //!
 //! # Example 1
 //!
@@ -43,8 +43,7 @@
 //!                     Node {
 //!                         height: Val::Percent(80.0),
 //!                         border: UiRect::all(Val::Px(5.0)).with_right(Val::Px(2.5)),
-//!                         // You can omit the overflow field for a vertical scrollbar in which case
-//!                         // it will be automatically set to Overflow::scroll_y()
+//!                         // You can omit the overflow field for a vertical scrollbar
 //!                         overflow: Overflow::scroll_y(),
 //!                         flex_direction: FlexDirection::Column,
 //!                         ..default()
@@ -81,9 +80,9 @@
 //!
 //! The [`Scrollable`] content responds to mouse wheel `Scroll` triggers. You can configure how fast the content scrolls by adding [`ScrollableScrollScale`] to the [`Scrollable`] node. See [example 2](crate#example-2).
 //!
-//! # Customization of the thumb
+//! # Thumb customization
 //!
-//! Color and drag speed of the thumb can be configured by adding [`ThumbColor`] and [`ThumbDragScale`] to the [`Scrollbar`]. See [example 2](crate#example-2).
+//! Color and `Drag` speed of the thumb can be configured by adding [`ThumbColor`] and [`ThumbDragScale`] to the [`Scrollbar`]. See [example 2](crate#example-2).
 //!
 //! # Example 2
 //!

@@ -32,8 +32,7 @@ fn setup(mut commands: Commands) {
                     Node {
                         height: Val::Percent(80.0),
                         border: UiRect::all(Val::Px(5.0)).with_right(Val::Px(2.5)),
-                        // You can omit the overflow field for a vertical scrollbar in which case it
-                        // will be automatically set to Overflow::scroll_y()
+                        // You can omit the overflow field for a vertical scrollbar
                         overflow: Overflow::scroll_y(),
                         flex_direction: FlexDirection::Column,
                         ..default()

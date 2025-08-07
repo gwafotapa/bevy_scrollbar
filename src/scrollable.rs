@@ -2,9 +2,9 @@ use bevy::{prelude::*, text::LineHeight};
 
 use crate::Scrollbar;
 
-/// Component of a scrollable node which usually has overflowing content.
+/// Component of a `Node` with overflowing content linking it to a [`Scrollbar`].
 ///
-/// Adding this component to a node makes it the `RelationshipTarget` of a [`Scrollbar`] node. See [`Scrollbar`] for more information.
+/// Adding this component to an entity makes it the `RelationshipTarget` of a [`Scrollbar`] entity. Despawning this entity will also despawn that [`Scrollbar`] entity. See [`Scrollbar`] for more information.
 ///
 /// Note: As `Children`, this component is not inserted directly. It is
 /// * either automatically inserted when you spawn a [`Scrollbar`] (see [example 1](crate#example-1));
@@ -24,7 +24,9 @@ impl Scrollable {
     }
 }
 
-/// Component of a [`Scrollable`] node giving how many pixels the node should move per mouse pixel scrolled.
+/// Component of a [`Scrollable`] node configuring how fast its content scrolls when scrolling the mouse.
+///
+/// This is unrelated to how fast the content scrolls when dragging the thumb of the [`Scrollbar`]. See [`ThumbDragScale`](super::ThumbDragScale) for that.
 #[derive(Component, Copy, Clone, Reflect, Debug)]
 pub struct ScrollableScrollScale(pub f32);
 
@@ -39,7 +41,9 @@ impl ScrollableScrollScale {
     pub const DEFAULT: f32 = 1.0;
 }
 
-/// Component of a [`Scrollable`] node used to compute line height for mouse pixel scroll. This is only used by vertical [`Scrollbar`]s using `MouseScrollUnit::Line`.
+/// Component of a [`Scrollable`] node used to compute line height for mouse scroll.
+///
+/// Only used by vertical [`Scrollbar`]s using `MouseScrollUnit::Line`.
 #[derive(Component, Copy, Clone, Reflect, Debug)]
 pub struct ScrollableLineHeight {
     /// Font size.
