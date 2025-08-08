@@ -223,12 +223,12 @@ fn update_scroll_and_thumb_positions(
     mut q_thumb: Query<(&mut Node, &ComputedNode, &ChildOf), Without<Scrollable>>,
     q_scrollbar: Query<(&Scrollbar, &ComputedNode)>,
     mut q_scrollable: Query<(&mut ScrollPosition, &Node, &ComputedNode), With<Scrollable>>,
-) {
-    let (mut thumb_node, thumb_cnode, child_of) = q_thumb.get_mut(thumb).unwrap();
+) -> Result {
+    let (mut thumb_node, thumb_cnode, child_of) = q_thumb.get_mut(thumb)?;
     let scrollbar = child_of.parent();
-    let (&Scrollbar { scrollable }, track_cnode) = q_scrollbar.get(scrollbar).unwrap();
+    let (&Scrollbar { scrollable }, track_cnode) = q_scrollbar.get(scrollbar)?;
     let (mut scroll_position, scrollable_node, scrollable_cnode) =
-        q_scrollable.get_mut(scrollable).unwrap();
+        q_scrollable.get_mut(scrollable)?;
 
     if scrollable_node.overflow.y == OverflowAxis::Scroll {
         let scaled_scroll_length = scrollable_cnode.content_size.y - scrollable_cnode.size.y;
@@ -263,4 +263,5 @@ fn update_scroll_and_thumb_positions(
             Val::Px(ratio * drag_length)
         };
     }
+    Ok(())
 }
