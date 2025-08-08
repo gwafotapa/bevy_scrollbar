@@ -1,5 +1,5 @@
 use bevy::{
-    ecs::{component::HookContext, world::DeferredWorld},
+    ecs::{lifecycle::HookContext, world::DeferredWorld},
     input::mouse::MouseScrollUnit,
     prelude::*,
 };
@@ -133,16 +133,14 @@ fn spawn_thumb_and_observers(mut world: DeferredWorld, HookContext { entity, .. 
 
         // Observe both the scrollbar and the thumb for Click triggers. The thumb is observed to stop
         // trigger propagation to the track.
-        let observer = Observer::new(jump_content_on_trough_click)
-            .with_entity(entity)
-            .with_entity(thumb);
+        let observer = Observer::new(jump_content_on_trough_click).with_entities([entity, thumb]);
         world.spawn(observer);
     });
 }
 
 /// Observer watching a [`Scrollable`] node for `Scroll` triggers.
 fn scroll_content_on_mouse_scroll(
-    scroll: Trigger<Pointer<Scroll>>,
+    scroll: On<Pointer<Scroll>>,
     mut q_scrollable: Query<(
         &mut ScrollPosition,
         &Node,
@@ -159,16 +157,16 @@ fn scroll_content_on_mouse_scroll(
     };
     let scroll = scroll_speed.0 * mouse_scroll;
     if node.overflow.y == OverflowAxis::Scroll {
-        scroll_position.offset_y -= scroll;
+        scroll_position.y -= scroll;
     } else if node.overflow.x == OverflowAxis::Scroll {
-        scroll_position.offset_x -= scroll;
+        scroll_position.x -= scroll;
     };
     Ok(())
 }
 
 /// Observer watching the thumb of the [`Scrollbar`] for `Drag` triggers.
 fn scroll_content_on_thumb_drag(
-    drag: Trigger<Pointer<Drag>>,
+    drag: On<Pointer<Drag>>,
     q_child_of: Query<&ChildOf>,
     q_scrollbar: Query<(&Scrollbar, &DragSpeed)>,
     mut q_scrollable: Query<(&mut ScrollPosition, &Node)>,
@@ -178,9 +176,9 @@ fn scroll_content_on_thumb_drag(
     let (&Scrollbar { scrollable }, drag_speed) = q_scrollbar.get(scrollbar)?;
     let (mut scroll_position, node) = q_scrollable.get_mut(scrollable)?;
     if node.overflow.y == OverflowAxis::Scroll {
-        scroll_position.offset_y += drag_speed.0 * drag.delta.y;
+        scroll_position.y += drag_speed.0 * drag.delta.y;
     } else if node.overflow.x == OverflowAxis::Scroll {
-        scroll_position.offset_x += drag_speed.0 * drag.delta.x;
+        scroll_position.x += drag_speed.0 * drag.delta.x;
     };
     Ok(())
 }
@@ -189,7 +187,7 @@ fn scroll_content_on_thumb_drag(
 ///
 /// This observer handles clicking the trough (i.e. the region of the track not covered by the thumb). When clicked, the thumb jumps to that position. This is achieved by discarding clicks on the thumb before they propagate to the track. This system only adjusts the ScrollPosition of the content. update_thumb() will see the change and update the thumb position as a result.
 fn jump_content_on_trough_click(
-    mut click: Trigger<Pointer<Click>>,
+    mut click: On<Pointer<Click>>,
     q_scrollbar: Query<(&Scrollbar, &ComputedNode, &Children)>,
     q_node: Query<(&Node, &ComputedNode)>,
     mut q_scroll_position: Query<&mut ScrollPosition>,
@@ -212,21 +210,29 @@ fn jump_content_on_trough_click(
     let mut scroll_position = q_scroll_position.get_mut(scrollable)?;
 
     if scrollable_node.overflow.y == OverflowAxis::Scroll {
-        let click_y = (thumb_cnode.size.y / 2.0)
-            .max(click_position.y * track_cnode.size.y)
-            .min(track_cnode.size.y - thumb_cnode.size.y / 2.0);
+        // The documentation says click_position.y lies between 0.0 and 1.0
+        // In fact, it lies between -0.5 and 0.5
+        let click_y = ((0.5 + click_position.y) * track_cnode.size.y).clamp(
+            thumb_cnode.size.y / 2.0,
+            track_cnode.size.y - thumb_cnode.size.y / 2.0,
+        );
         let ratio =
             (click_y - thumb_cnode.size.y / 2.0) / (track_cnode.size.y - thumb_cnode.size.y);
-        scroll_position.offset_y = track_cnode.inverse_scale_factor
+        scroll_position.y = track_cnode.inverse_scale_factor
             * ratio
             * (scrollable_cnode.content_size.y - scrollable_cnode.size.y);
+        debug!("click_position.y: {}", click_position.y);
+        debug!("click_y: {click_y}");
+        debug!("ratio: {}\n", click_position.y);
     } else if scrollable_node.overflow.x == OverflowAxis::Scroll {
-        let click_x = (thumb_cnode.size.x / 2.0)
-            .max(click_position.x * track_cnode.size.x)
-            .min(track_cnode.size.x - thumb_cnode.size.x / 2.0);
+        // Same remark as above
+        let click_x = ((0.5 + click_position.x) * track_cnode.size.x).clamp(
+            thumb_cnode.size.x / 2.0,
+            track_cnode.size.x - thumb_cnode.size.x / 2.0,
+        );
         let ratio =
             (click_x - thumb_cnode.size.x / 2.0) / (track_cnode.size.x - thumb_cnode.size.x);
-        scroll_position.offset_x = track_cnode.inverse_scale_factor
+        scroll_position.x = track_cnode.inverse_scale_factor
             * ratio
             * (scrollable_cnode.content_size.x - scrollable_cnode.size.x);
     };

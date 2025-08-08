@@ -1,7 +1,7 @@
 //! Example showing how to spawn an horizontal scrollbar from a scrollable node.
 
 use bevy::{ecs::spawn::SpawnIter, prelude::*};
-use bevy_scrollbar::{ScrollSpeed, Scrollable, ScrollbarPlugin, ThumbColor, DragSpeed};
+use bevy_scrollbar::{DragSpeed, ScrollSpeed, Scrollable, ScrollbarPlugin, ThumbColor};
 
 fn main() {
     App::new()
@@ -35,7 +35,7 @@ fn setup(mut commands: Commands) {
             overflow: Overflow::scroll_x(),
             ..default()
         },
-        BorderColor(Color::BLACK),
+        BorderColor::all(Color::BLACK),
         Children::spawn(SpawnIter((0..100).map(|i| {
             (
                 Node {
@@ -46,7 +46,7 @@ fn setup(mut commands: Commands) {
                     align_items: AlignItems::Center,
                     ..default()
                 },
-                BorderColor(Color::BLACK),
+                BorderColor::all(Color::BLACK),
                 Children::spawn_one(Text::new(format!("{i}"))),
             )
         }))),
@@ -64,7 +64,7 @@ fn setup(mut commands: Commands) {
                 border: UiRect::all(Val::Px(5.0)),
                 ..default()
             },
-            BorderColor(Color::BLACK),
+            BorderColor::all(Color::BLACK),
             // The thumb will be spawned with this same border radius
             BorderRadius::all(Val::Px(10.0)),
             // Customize color of the thumb

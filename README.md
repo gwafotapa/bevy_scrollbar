@@ -22,6 +22,7 @@ Feel free to open a small PR.
 
 ## Bevy compatibility
 
-| `bevy_scrollbar` | `bevy` |
-| :--              | :--    |
-| `0.1`-`0.3`      | `0.16` |
+| `bevy_scrollbar` | `bevy`       |
+|:-----------------|:-------------|
+| `0.4`            | `0.17.0-dev` |
+| `0.1`-`0.3`      | `0.16`       |

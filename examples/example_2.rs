@@ -1,7 +1,7 @@
 //! Example showing how to spawn a vertical scrollbar from the scrollable node.
 
 use bevy::{ecs::spawn::SpawnIter, prelude::*};
-use bevy_scrollbar::{ScrollSpeed, Scrollable, ScrollbarPlugin, ThumbColor, DragSpeed};
+use bevy_scrollbar::{DragSpeed, ScrollSpeed, Scrollable, ScrollbarPlugin, ThumbColor};
 
 fn main() {
     App::new()
@@ -33,7 +33,7 @@ fn setup(mut commands: Commands) {
             // Ommitting the overflow field because the scrollbar is vertical
             ..default()
         },
-        BorderColor(Color::BLACK),
+        BorderColor::all(Color::BLACK),
         Children::spawn(SpawnIter((0..100).map(|i| {
             (
                 Node {
@@ -60,7 +60,7 @@ fn setup(mut commands: Commands) {
                 border: UiRect::all(Val::Px(5.0)),
                 ..default()
             },
-            BorderColor(Color::BLACK),
+            BorderColor::all(Color::BLACK),
             // The thumb will be spawned with the same border radius
             BorderRadius::all(Val::Px(10.0)),
             // Customize color of the thumb

@@ -48,7 +48,7 @@
 //!                         flex_direction: FlexDirection::Column,
 //!                         ..default()
 //!                     },
-//!                     BorderColor(Color::BLACK),
+//!                     BorderColor::all(Color::BLACK),
 //!                     Children::spawn(SpawnIter(
 //!                         (0..100).map(|i| Text::new(format!("  Scrolling {i}!  "))),
 //!                     )),
@@ -65,7 +65,7 @@
 //!                     border: UiRect::all(Val::Px(5.0)).with_left(Val::Px(2.5)),
 //!                     ..default()
 //!                 },
-//!                 BorderColor(Color::BLACK),
+//!                 BorderColor::all(Color::BLACK),
 //!             ));
 //!         })),
 //!     ));
@@ -122,7 +122,7 @@
 //!             // Ommitting the overflow field because the scrollbar is vertical
 //!             ..default()
 //!         },
-//!         BorderColor(Color::BLACK),
+//!         BorderColor::all(Color::BLACK),
 //!         Children::spawn(SpawnIter((0..100).map(|i| {
 //!             (
 //!                 Node {
@@ -149,7 +149,7 @@
 //!                 border: UiRect::all(Val::Px(5.0)),
 //!                 ..default()
 //!             },
-//!             BorderColor(Color::BLACK),
+//!             BorderColor::all(Color::BLACK),
 //!             // The thumb will be spawned with the same border radius
 //!             BorderRadius::all(Val::Px(10.0)),
 //!             // Customize color of the thumb
@@ -164,36 +164,31 @@
 mod scrollable;
 mod scrollbar;
 
-use bevy::{prelude::*, ui::UiSystem};
+use bevy::{prelude::*, ui::UiSystems};
 pub use scrollable::{ScrollSpeed, Scrollable, ScrollableLineHeight};
 pub use scrollbar::{DragSpeed, Scrollbar, ThumbColor};
 
-/// Plugin scheduling [`ScrollbarSystem`] after `UiSystem::Layout` in `PostUpdate`.
+/// Plugin scheduling [`ScrollbarSystems`] after `UiSystem::Layout` in `PostUpdate`.
 pub struct ScrollbarPlugin;
 
-/// `SystemSet` containing the system updating the thumb of the [`Scrollbar`].
+/// `SystemSet` containing the system updating the thumb of a [`Scrollbar`].
 #[derive(SystemSet, Clone, Eq, PartialEq, Hash, Debug)]
-pub struct ScrollbarSystem;
+pub struct ScrollbarSystems;
 
 impl Plugin for ScrollbarPlugin {
     fn build(&self, app: &mut App) {
-        app.register_type::<Scrollbar>()
-            .register_type::<Scrollable>()
-            .register_type::<ThumbColor>()
-            .register_type::<DragSpeed>()
-            .register_type::<ScrollSpeed>()
-            .register_type::<ScrollableLineHeight>();
-
         app.add_systems(
             PostUpdate,
-            update_thumb.after(UiSystem::Layout).in_set(ScrollbarSystem),
+            update_thumb
+                .after(UiSystems::Layout)
+                .in_set(ScrollbarSystems),
         );
     }
 }
 
-/// Updates the length and position of the thumb.
+/// Clamps [`ScrollPosition`] and updates the length and position of the thumb.
 ///
-/// Bevy computes layout and `Transform` of UI nodes in `UiSystem::Layout`. This system runs in `PostUpdate` after `UiSystem::Layout` and uses change detection on the [`Scrollable`] node. Graphically, the thumb is updated on the frame following the change. This allows us to use the computation done by `UiSystem::Layout` instead of redoing it.
+/// Bevy computes layout and `Transform` of UI nodes in `UiSystems::Layout`. This system runs in `PostUpdate` after `UiSystems::Layout` and uses change detection on the [`Scrollable`] node. Graphically, the thumb is updated on the frame following the change. This allows us to use the computation done by `UiSystems::Layout`.
 fn update_thumb(
     q_changed_scrollable: Query<
         (&Scrollable, &Node, Ref<ComputedNode>),
@@ -205,7 +200,7 @@ fn update_thumb(
 ) -> Result {
     for (scrollable, scrollable_node, scrollable_cnode) in &q_changed_scrollable {
         let thumb = q_children.get(scrollable.scrollbar())?[0];
-        commands.run_system_cached_with(update_thumb_position, thumb);
+        commands.run_system_cached_with(update_scroll_and_thumb_positions, thumb);
 
         // Recompute thumb length only if the content changed, not if it was merely scrolled
         if scrollable_cnode.is_changed() {
@@ -222,25 +217,27 @@ fn update_thumb(
     Ok(())
 }
 
-/// Updates the position of the thumb.
-fn update_thumb_position(
+/// Clamps [`ScrollPosition`] and updates the position of the thumb.
+fn update_scroll_and_thumb_positions(
     In(thumb): In<Entity>,
     mut q_thumb: Query<(&mut Node, &ComputedNode, &ChildOf), Without<Scrollable>>,
     q_scrollbar: Query<(&Scrollbar, &ComputedNode)>,
-    q_scrollable: Query<(&Node, &ComputedNode, &ScrollPosition), With<Scrollable>>,
+    mut q_scrollable: Query<(&mut ScrollPosition, &Node, &ComputedNode), With<Scrollable>>,
 ) {
     let (mut thumb_node, thumb_cnode, child_of) = q_thumb.get_mut(thumb).unwrap();
     let scrollbar = child_of.parent();
     let (&Scrollbar { scrollable }, track_cnode) = q_scrollbar.get(scrollbar).unwrap();
-    let (scrollable_node, scrollable_cnode, scroll_position) =
-        q_scrollable.get(scrollable).unwrap();
+    let (mut scroll_position, scrollable_node, scrollable_cnode) =
+        q_scrollable.get_mut(scrollable).unwrap();
 
     if scrollable_node.overflow.y == OverflowAxis::Scroll {
+        debug!("scroll position: {}", scroll_position.y);
         let scroll_length = scrollable_cnode.content_size.y - scrollable_cnode.size.y;
+        scroll_position.y = scroll_position.y.clamp(0.0, scroll_length);
         thumb_node.margin.top = if scroll_length <= 0.0 {
             Val::ZERO
         } else {
-            let ratio = scroll_position.offset_y / scroll_length;
+            let ratio = scroll_position.y / scroll_length;
             let scaled_drag_length = track_cnode.size.y
                 - (track_cnode.border.top + track_cnode.border.bottom + thumb_cnode.size.y);
             let drag_length = track_cnode.inverse_scale_factor * scaled_drag_length;
@@ -254,20 +251,15 @@ fn update_thumb_position(
         debug!("thumb top margin: {:?}\n", thumb_node.margin.top);
     } else if scrollable_node.overflow.x == OverflowAxis::Scroll {
         let scroll_length = scrollable_cnode.content_size.x - scrollable_cnode.size.x;
+        scroll_position.x = scroll_position.x.clamp(0.0, scroll_length);
         thumb_node.margin.left = if scroll_length <= 0.0 {
             Val::ZERO
         } else {
-            let ratio = scroll_position.offset_x / scroll_length;
+            let ratio = scroll_position.x / scroll_length;
             let scaled_drag_length = track_cnode.size.x
                 - (track_cnode.border.left + track_cnode.border.right + thumb_cnode.size.x);
             let drag_length = track_cnode.inverse_scale_factor * scaled_drag_length;
             Val::Px(ratio * drag_length)
         };
-        debug!("scrollable node size: {}", scrollable_cnode.size.x);
-        debug!(
-            "scrollable content size: {}",
-            scrollable_cnode.content_size.x,
-        );
-        debug!("thumb left margin: {:?}\n", thumb_node.margin.left);
     }
 }

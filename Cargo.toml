@@ -14,12 +14,16 @@ default = ["std"]
 std = ["bevy/std"]
 
 [dependencies.bevy]
-version = "0.16.1"
+version = "0.17.0-dev"
+git = "https://github.com/bevyengine/bevy"
+rev = "40b6940"
 default-features = false
 features = ["bevy_ui", "bevy_picking", "bevy_log"]
 
 [dev-dependencies.bevy]
-version = "0.16.1"
+version = "0.17.0-dev"
+git = "https://github.com/bevyengine/bevy"
+rev = "40b6940"
 default-features = true
 
 [lints.rust]

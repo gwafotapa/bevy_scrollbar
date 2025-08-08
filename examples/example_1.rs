@@ -37,7 +37,7 @@ fn setup(mut commands: Commands) {
                         flex_direction: FlexDirection::Column,
                         ..default()
                     },
-                    BorderColor(Color::BLACK),
+                    BorderColor::all(Color::BLACK),
                     Children::spawn(SpawnIter(
                         (0..100).map(|i| Text::new(format!("  Scrolling {i}!  "))),
                     )),
@@ -54,7 +54,7 @@ fn setup(mut commands: Commands) {
                     border: UiRect::all(Val::Px(5.0)).with_left(Val::Px(2.5)),
                     ..default()
                 },
-                BorderColor(Color::BLACK),
+                BorderColor::all(Color::BLACK),
             ));
         })),
     ));

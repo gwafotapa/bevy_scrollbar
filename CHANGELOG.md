@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0
+
+* Adapt to Bevy 0.17.0-dev
+* Remove type registering
+* Rename `ScrollbarSystem` to `ScrollbarSystems`
+  
 ## 0.3.0
 
 * Have the thumb jump when the trough is clicked
