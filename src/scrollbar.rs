@@ -98,13 +98,16 @@ fn spawn_thumb_and_observers(mut world: DeferredWorld, HookContext { entity, .. 
         // Observe the scrollable node for mouse Scroll triggers
         scrollable.observe(scroll_content_on_mouse_scroll);
 
-        let Ok(scrollbar) = world.get_entity_mut(entity) else {
+        let Ok(mut scrollbar) = world.get_entity_mut(entity) else {
             warn!(
                 "Scrollbar setup aborted. Scrollbar entity {} does not exist.",
                 entity.index()
             );
             return;
         };
+
+        // Observe the scrollbar for Click triggers
+        scrollbar.observe(jump_content_on_trough_click);
 
         // Spawn the thumb and observe it for Drag triggers
         let node = match direction {
@@ -121,20 +124,14 @@ fn spawn_thumb_and_observers(mut world: DeferredWorld, HookContext { entity, .. 
         };
         let border_radius = *scrollbar.get::<BorderRadius>().unwrap();
         let thumb_color = scrollbar.get::<ThumbColor>().unwrap().0;
-        let thumb = world
+        world
             .spawn((
                 node,
                 ChildOf(entity),
                 border_radius,
                 BackgroundColor(thumb_color),
             ))
-            .observe(scroll_content_on_thumb_drag)
-            .id();
-
-        // Observe both the scrollbar and the thumb for Click triggers. The thumb is observed to stop
-        // trigger propagation to the track.
-        let observer = Observer::new(jump_content_on_trough_click).with_entities([entity, thumb]);
-        world.spawn(observer);
+            .observe(scroll_content_on_thumb_drag);
     });
 }
 
@@ -185,53 +182,54 @@ fn scroll_content_on_thumb_drag(
 
 /// Observer watching both the [`Scrollbar`] and its thumb for `Click` triggers.
 ///
-/// This observer handles clicking the trough (i.e. the region of the track not covered by the thumb). When clicked, the thumb jumps to that position. This is achieved by discarding clicks on the thumb before they propagate to the track. This system only adjusts the ScrollPosition of the content. update_thumb() will see the change and update the thumb position as a result.
+/// This observer handles clicking the trough (i.e. the region of the track not covered by the thumb). When the trough is clicked, the thumb jumps to that position. Clicks that did not originate from the scrollbar, i.e. clicks on the thumb, are discarded. This system only adjusts the ScrollPosition of the content. update_scroll_position_and_thumb() will see the change and do the rest of the work.
 fn jump_content_on_trough_click(
-    mut click: On<Pointer<Click>>,
+    click: On<Pointer<Click>>,
     q_scrollbar: Query<(&Scrollbar, &ComputedNode, &Children)>,
     q_node: Query<(&Node, &ComputedNode)>,
     mut q_scroll_position: Query<&mut ScrollPosition>,
 ) -> Result {
+    let scrollbar = click.target();
+    if scrollbar != click.original_target() {
+        // The thumb was clicked
+        return Ok(());
+    }
+
     let Some(click_position) = click.hit.position else {
         warn!("Scrollbar Click observed but hit position is missing to move the thumb");
         return Ok(());
     };
 
-    let scrollbar = click.target();
-    let Ok((&Scrollbar { scrollable }, track_cnode, children)) = q_scrollbar.get(scrollbar) else {
-        // Discard event because the thumb was clicked
-        click.propagate(false);
-        return Ok(());
-    };
-
+    let (&Scrollbar { scrollable }, track_cnode, children) = q_scrollbar.get(scrollbar)?;
     let thumb = children[0];
     let (_, thumb_cnode) = q_node.get(thumb)?;
     let (scrollable_node, scrollable_cnode) = q_node.get(scrollable)?;
     let mut scroll_position = q_scroll_position.get_mut(scrollable)?;
 
     if scrollable_node.overflow.y == OverflowAxis::Scroll {
-        // The documentation says click_position.y lies between 0.0 and 1.0
-        // In fact, it lies between -0.5 and 0.5
-        let click_y = ((0.5 + click_position.y) * track_cnode.size.y).clamp(
+        // Compute the offset of the click from the track top in logical pixels
+        // Remember hit coordinates lie between -0.5 and 0.5
+        let offset_y = ((0.5 + click_position.y) * track_cnode.size.y).clamp(
             thumb_cnode.size.y / 2.0,
             track_cnode.size.y - thumb_cnode.size.y / 2.0,
         );
         let ratio =
-            (click_y - thumb_cnode.size.y / 2.0) / (track_cnode.size.y - thumb_cnode.size.y);
+            (offset_y - thumb_cnode.size.y / 2.0) / (track_cnode.size.y - thumb_cnode.size.y);
         scroll_position.y = track_cnode.inverse_scale_factor
             * ratio
             * (scrollable_cnode.content_size.y - scrollable_cnode.size.y);
         debug!("click_position.y: {}", click_position.y);
-        debug!("click_y: {click_y}");
+        debug!("offset_y: {offset_y}");
         debug!("ratio: {}\n", click_position.y);
     } else if scrollable_node.overflow.x == OverflowAxis::Scroll {
-        // Same remark as above
-        let click_x = ((0.5 + click_position.x) * track_cnode.size.x).clamp(
+        // Compute the offset of the click from the track left in logical pixels
+        // Remember hit coordinates lie between -0.5 and 0.5
+        let offset_x = ((0.5 + click_position.x) * track_cnode.size.x).clamp(
             thumb_cnode.size.x / 2.0,
             track_cnode.size.x - thumb_cnode.size.x / 2.0,
         );
         let ratio =
-            (click_x - thumb_cnode.size.x / 2.0) / (track_cnode.size.x - thumb_cnode.size.x);
+            (offset_x - thumb_cnode.size.x / 2.0) / (track_cnode.size.x - thumb_cnode.size.x);
         scroll_position.x = track_cnode.inverse_scale_factor
             * ratio
             * (scrollable_cnode.content_size.x - scrollable_cnode.size.x);
