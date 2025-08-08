@@ -179,7 +179,7 @@ impl Plugin for ScrollbarPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             PostUpdate,
-            update_thumb
+            update_scroll_position_and_thumb
                 .after(UiSystems::Layout)
                 .in_set(ScrollbarSystems),
         );
@@ -189,7 +189,7 @@ impl Plugin for ScrollbarPlugin {
 /// Clamps [`ScrollPosition`] and updates the length and position of the thumb.
 ///
 /// Bevy computes layout and `Transform` of UI nodes in `UiSystems::Layout`. This system runs in `PostUpdate` after `UiSystems::Layout` and uses change detection on the [`Scrollable`] node. Graphically, the thumb is updated on the frame following the change. This allows us to use the computation done by `UiSystems::Layout`.
-fn update_thumb(
+fn update_scroll_position_and_thumb(
     q_changed_scrollable: Query<
         (&Scrollable, &Node, Ref<ComputedNode>),
         Or<(Changed<ComputedNode>, Changed<ScrollPosition>)>,
@@ -231,8 +231,8 @@ fn update_scroll_and_thumb_positions(
         q_scrollable.get_mut(scrollable).unwrap();
 
     if scrollable_node.overflow.y == OverflowAxis::Scroll {
-        debug!("scroll position: {}", scroll_position.y);
-        let scroll_length = scrollable_cnode.content_size.y - scrollable_cnode.size.y;
+        let scaled_scroll_length = scrollable_cnode.content_size.y - scrollable_cnode.size.y;
+        let scroll_length = scrollable_cnode.inverse_scale_factor * scaled_scroll_length;
         scroll_position.y = scroll_position.y.clamp(0.0, scroll_length);
         thumb_node.margin.top = if scroll_length <= 0.0 {
             Val::ZERO
@@ -250,7 +250,8 @@ fn update_scroll_and_thumb_positions(
         );
         debug!("thumb top margin: {:?}\n", thumb_node.margin.top);
     } else if scrollable_node.overflow.x == OverflowAxis::Scroll {
-        let scroll_length = scrollable_cnode.content_size.x - scrollable_cnode.size.x;
+        let scaled_scroll_length = scrollable_cnode.content_size.x - scrollable_cnode.size.x;
+        let scroll_length = scrollable_cnode.inverse_scale_factor * scaled_scroll_length;
         scroll_position.x = scroll_position.x.clamp(0.0, scroll_length);
         thumb_node.margin.left = if scroll_length <= 0.0 {
             Val::ZERO
