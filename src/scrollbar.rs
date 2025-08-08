@@ -11,11 +11,11 @@ use crate::{ScrollSpeed, Scrollable, ScrollableLineHeight};
 /// Add this component to an entity to turn it into a scrollbar. Doing so will:
 /// * add the `Node` component if it's not already present;
 /// * add a `Relationship` between the scrollbar and the `scrollable` entity, inserting [`Scrollable`] into the target which typically has overflowing content;
-/// * if the target does not have either `Node::overflow::y` or `Node::overflow::x` set to `OverflowAxis::Scroll`, then set `Node::overflow::y` to `OverflowAxis::Scroll` and configure the scrollbar vertical;
+/// * if the target does not have either `Node::overflow::y` or `Node::overflow::x` set to `OverflowAxis::Scroll`, then set `Node::overflow::y` to `OverflowAxis::Scroll` for a vertical scrollbar;
 /// * spawn the _thumb_ of the scrollbar as its child;
 /// * spawn an observer watching the target for `Scroll` triggers;
 /// * spawn an observer watching the thumb for `Drag` triggers;
-/// * spawn an observer watching this entity for `Click` triggers.
+/// * spawn an observer watching the scrollbar for `Click` triggers.
 ///
 /// The scroll speed of the mouse wheel can be configured by adding [`ScrollSpeed`] to the target. The color and drag speed of the thumb can be configured by adding [`ThumbColor`] and [`DragSpeed`] to the scrollbar.
 

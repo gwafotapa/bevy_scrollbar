@@ -236,26 +236,38 @@ fn update_thumb_position(
         q_scrollable.get(scrollable).unwrap();
 
     if scrollable_node.overflow.y == OverflowAxis::Scroll {
-        let ratio =
-            scroll_position.offset_y / (scrollable_cnode.content_size.y - scrollable_cnode.size.y);
-        let track_cnode_scroll_height = track_cnode.size.y
-            - (track_cnode.border.top + track_cnode.border.bottom + thumb_cnode.size.y);
-        let top_margin_max = track_cnode.inverse_scale_factor * track_cnode_scroll_height;
-        thumb_node.margin.top = Val::Px(ratio * top_margin_max);
+        let scroll_length = scrollable_cnode.content_size.y - scrollable_cnode.size.y;
+        thumb_node.margin.top = if scroll_length <= 0.0 {
+            Val::ZERO
+        } else {
+            let ratio = scroll_position.offset_y / scroll_length;
+            let scaled_drag_length = track_cnode.size.y
+                - (track_cnode.border.top + track_cnode.border.bottom + thumb_cnode.size.y);
+            let drag_length = track_cnode.inverse_scale_factor * scaled_drag_length;
+            Val::Px(ratio * drag_length)
+        };
+        debug!("scrollable node size: {}", scrollable_cnode.size.y);
         debug!(
-            "Thumb height = {} / {} = {}%",
-            scrollable_cnode.size.y, scrollable_cnode.content_size.y, ratio
+            "scrollable content size: {}",
+            scrollable_cnode.content_size.y,
         );
+        debug!("thumb top margin: {:?}\n", thumb_node.margin.top);
     } else if scrollable_node.overflow.x == OverflowAxis::Scroll {
-        let ratio =
-            scroll_position.offset_x / (scrollable_cnode.content_size.x - scrollable_cnode.size.x);
-        let track_cnode_scroll_width = track_cnode.size.x
-            - (track_cnode.border.left + track_cnode.border.right + thumb_cnode.size.x);
-        let left_margin_max = track_cnode.inverse_scale_factor * track_cnode_scroll_width;
-        thumb_node.margin.left = Val::Px(ratio * left_margin_max);
+        let scroll_length = scrollable_cnode.content_size.x - scrollable_cnode.size.x;
+        thumb_node.margin.left = if scroll_length <= 0.0 {
+            Val::ZERO
+        } else {
+            let ratio = scroll_position.offset_x / scroll_length;
+            let scaled_drag_length = track_cnode.size.x
+                - (track_cnode.border.left + track_cnode.border.right + thumb_cnode.size.x);
+            let drag_length = track_cnode.inverse_scale_factor * scaled_drag_length;
+            Val::Px(ratio * drag_length)
+        };
+        debug!("scrollable node size: {}", scrollable_cnode.size.x);
         debug!(
-            "Thumb width = {} / {} = {}%",
-            scrollable_cnode.size.x, scrollable_cnode.content_size.x, ratio
+            "scrollable content size: {}",
+            scrollable_cnode.content_size.x,
         );
+        debug!("thumb left margin: {:?}\n", thumb_node.margin.left);
     }
 }
