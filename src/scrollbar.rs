@@ -17,7 +17,7 @@ use crate::{ScrollSpeed, Scrollable, ScrollableLineHeight};
 /// * spawn an observer watching the thumb for `Drag` triggers;
 /// * spawn an observer watching the scrollbar for `Click` triggers.
 ///
-/// The scroll speed of the mouse wheel can be configured by adding [`ScrollSpeed`] to the target. The color and drag speed of the thumb can be configured by adding [`ThumbColor`] and [`DragSpeed`] to the scrollbar.
+/// The scroll speed of the content can be configured by adding [`ScrollSpeed`] to the target. The color and drag speed of the thumb can be configured by adding [`ThumbColor`] and [`DragSpeed`] to the scrollbar.
 
 #[derive(Component, Clone, Reflect, Debug)]
 #[relationship(relationship_target = Scrollable)]

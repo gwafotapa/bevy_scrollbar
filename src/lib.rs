@@ -74,15 +74,15 @@
 //!
 //! # The [`Scrollbar`] / [`Scrollable`] relationship
 //!
-//! The [`Scrollbar`] component implements `Relationship` with target [`Scrollable`]. This relates the [`Scrollbar`] node to the overflowed node to which [`Scrollable`] is added. This means [`Scrollable`] can be used to spawn a scrollbar (the same way `Children` can be used to spawn children). See [example 2](crate#example-2).
+//! The [`Scrollbar`] component implements `Relationship` with target [`Scrollable`]. This relates the [`Scrollbar`] node to the overflowed node to which [`Scrollable`] is added. This means [`Scrollable`] can be used to spawn a scrollbar (the same way `Children` can be used to spawn children). See [example-2](crate#example-2).
 //!
 //! # The [`Scrollable`] content
 //!
-//! The [`Scrollable`] content responds to mouse `Scroll` triggers. You can configure how fast the content scrolls by adding [`ScrollSpeed`] to the [`Scrollable`] node. See [example 2](crate#example-2).
+//! The [`Scrollable`] content responds to mouse `Scroll` triggers. You can configure how fast the content scrolls by adding [`ScrollSpeed`] to the [`Scrollable`] node. See [example-2](crate#example-2).
 //!
 //! # Thumb customization
 //!
-//! Color and `Drag` speed of the thumb can be configured by adding [`ThumbColor`] and [`DragSpeed`] to the [`Scrollbar`]. See [example 2](crate#example-2).
+//! Color and `Drag` speed of the thumb can be configured by adding [`ThumbColor`] and [`DragSpeed`] to the [`Scrollbar`]. See [example-2](crate#example-2).
 //!
 //! # Example 2
 //!
