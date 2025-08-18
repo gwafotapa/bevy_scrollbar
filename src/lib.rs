@@ -165,6 +165,7 @@ mod scrollable;
 mod scrollbar;
 
 use bevy::{prelude::*, ui::UiSystems};
+use log::debug;
 pub use scrollable::{ScrollSpeed, Scrollable, ScrollableLineHeight};
 pub use scrollbar::{DragSpeed, Scrollbar, ThumbColor};
 

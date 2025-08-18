@@ -3,6 +3,7 @@ use bevy::{
     input::mouse::MouseScrollUnit,
     prelude::*,
 };
+use log::{debug, warn};
 
 use crate::{ScrollSpeed, Scrollable, ScrollableLineHeight};
 
