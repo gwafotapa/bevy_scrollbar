@@ -18,17 +18,12 @@ log = "0.4.27"
 
 [dependencies.bevy]
 version = "0.17.0-dev"
-# git = "https://github.com/bevyengine/bevy"
-# rev = "ef845e0cea8b290a83188f85fcd05db48907f9df"
 path = "../bevy"
 default-features = false
-# bevy_sprite_picking_backend is a temporary fix because of a missing dependency in bevy
 features = ["bevy_ui", "bevy_picking"]
 
 [dev-dependencies.bevy]
 version = "0.17.0-dev"
-# git = "https://github.com/bevyengine/bevy"
-# rev = "ef845e0cea8b290a83188f85fcd05db48907f9df"
 path = "../bevy"
 default-features = true
 

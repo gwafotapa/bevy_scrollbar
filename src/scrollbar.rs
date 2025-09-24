@@ -146,7 +146,7 @@ fn scroll_content_on_mouse_scroll(
         Option<&ScrollableLineHeight>,
     )>,
 ) -> Result {
-    let scrollable = scroll.target();
+    let scrollable = scroll.entity;
     let (mut scroll_position, node, scroll_speed, line_height) =
         q_scrollable.get_mut(scrollable)?;
     let mouse_scroll = match (scroll.unit, line_height) {
@@ -169,7 +169,7 @@ fn scroll_content_on_thumb_drag(
     q_scrollbar: Query<(&Scrollbar, &DragSpeed)>,
     mut q_scrollable: Query<(&mut ScrollPosition, &Node)>,
 ) -> Result {
-    let thumb = drag.target();
+    let thumb = drag.entity;
     let scrollbar = q_child_of.get(thumb)?.parent();
     let (&Scrollbar { scrollable }, drag_speed) = q_scrollbar.get(scrollbar)?;
     let (mut scroll_position, node) = q_scrollable.get_mut(scrollable)?;
@@ -190,8 +190,8 @@ fn jump_content_on_trough_click(
     q_node: Query<(&Node, &ComputedNode)>,
     mut q_scroll_position: Query<&mut ScrollPosition>,
 ) -> Result {
-    let scrollbar = click.target();
-    if scrollbar != click.original_target() {
+    let scrollbar = click.entity;
+    if scrollbar != click.original_event_target() {
         // The thumb was clicked
         return Ok(());
     }
