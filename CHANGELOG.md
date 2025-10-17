@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0
+
+* bump Bevy to 0.17.2
+
 ## 0.4.0
 
 * Adapt to Bevy 0.17.0-dev
