@@ -13,12 +13,14 @@ documentation = "https://docs.rs/bevy_scrollbar"
 log = "0.4.27"
 
 [dependencies.bevy]
-version = "0.17.2"
+version = "0.17.3"
+# path = "../bevy"
 default-features = false
 features = ["bevy_ui", "bevy_picking"]
 
 [dev-dependencies.bevy]
-version = "0.17.2"
+version = "0.17.3"
+# path = "../bevy"
 
 [lints.rust]
 missing_docs = "warn"
