@@ -58,11 +58,11 @@ fn setup(mut commands: Commands) {
                 height: Val::Percent(80.0),
                 margin: UiRect::left(Val::Px(5.0)),
                 border: UiRect::all(Val::Px(5.0)),
+                // The thumb will be spawned with the same border radius
+                border_radius: BorderRadius::all(Val::Px(10.0)),
                 ..default()
             },
             BorderColor::all(Color::BLACK),
-            // The thumb will be spawned with the same border radius
-            BorderRadius::all(Val::Px(10.0)),
             // Customize color of the thumb
             ThumbColor(Color::srgb(0.0, 0.0, 1.0)),
             // Customize drag speed of the thumb

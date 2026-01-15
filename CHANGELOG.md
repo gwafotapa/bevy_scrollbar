@@ -1,8 +1,12 @@
 # Changelog
 
+## 0.6.0
+
+* Bump Bevy to 0.18.0
+
 ## 0.5.0
 
-* bump Bevy to 0.17.2
+* Bump Bevy to 0.17.2
 
 ## 0.4.0
 

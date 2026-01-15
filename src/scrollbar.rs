@@ -111,27 +111,25 @@ fn spawn_thumb_and_observers(mut world: DeferredWorld, HookContext { entity, .. 
         scrollbar.observe(jump_content_on_trough_click);
 
         // Spawn the thumb and observe it for Drag triggers
+        let border_radius = scrollbar.get::<Node>().unwrap().border_radius;
         let node = match direction {
             ScrollDirection::Vertical => Node {
                 width: Val::Percent(100.0),
                 height: Val::ZERO,
+                border_radius,
                 ..default()
             },
             ScrollDirection::Horizontal => Node {
                 width: Val::ZERO,
                 height: Val::Percent(100.0),
+                border_radius,
                 ..default()
             },
         };
-        let border_radius = *scrollbar.get::<BorderRadius>().unwrap();
+
         let thumb_color = scrollbar.get::<ThumbColor>().unwrap().0;
         world
-            .spawn((
-                node,
-                ChildOf(entity),
-                border_radius,
-                BackgroundColor(thumb_color),
-            ))
+            .spawn((node, ChildOf(entity), BackgroundColor(thumb_color)))
             .observe(scroll_content_on_thumb_drag);
     });
 }

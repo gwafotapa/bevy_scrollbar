@@ -240,7 +240,9 @@ fn update_scroll_and_thumb_positions(
         } else {
             let ratio = scroll_position.y / scroll_length;
             let scaled_drag_length = track_cnode.size.y
-                - (track_cnode.border.top + track_cnode.border.bottom + thumb_cnode.size.y);
+                - (track_cnode.border.min_inset.y
+                    + track_cnode.border.max_inset.y
+                    + thumb_cnode.size.y);
             let drag_length = track_cnode.inverse_scale_factor * scaled_drag_length;
             Val::Px(ratio * drag_length)
         };
@@ -259,7 +261,9 @@ fn update_scroll_and_thumb_positions(
         } else {
             let ratio = scroll_position.x / scroll_length;
             let scaled_drag_length = track_cnode.size.x
-                - (track_cnode.border.left + track_cnode.border.right + thumb_cnode.size.x);
+                - (track_cnode.border.min_inset.x
+                    + track_cnode.border.max_inset.x
+                    + thumb_cnode.size.x);
             let drag_length = track_cnode.inverse_scale_factor * scaled_drag_length;
             Val::Px(ratio * drag_length)
         };

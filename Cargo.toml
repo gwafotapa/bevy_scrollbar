@@ -1,6 +1,6 @@
 [package]
 name = "bevy_scrollbar"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 description = "Bevy plugin providing a scrollbar."
@@ -10,17 +10,11 @@ repository = "https://github.com/gwafotapa/bevy_scrollbar"
 documentation = "https://docs.rs/bevy_scrollbar"
 
 [dependencies]
+bevy = { version = "0.18.0", default-features = false, features = ["bevy_ui", "bevy_picking"] }
 log = "0.4.27"
 
-[dependencies.bevy]
-version = "0.17.3"
-# path = "../bevy"
-default-features = false
-features = ["bevy_ui", "bevy_picking"]
-
-[dev-dependencies.bevy]
-version = "0.17.3"
-# path = "../bevy"
+[dev-dependencies]
+bevy = { version = "0.18.0", default-features = false, features = ["ui"] }
 
 [lints.rust]
 missing_docs = "warn"
